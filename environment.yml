@@ -1,0 +1,11 @@
+name: template
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python
+  - black
+  - pip
+  - pip:
+    - law
+    - luigi
