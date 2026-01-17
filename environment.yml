@@ -3,9 +3,17 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python
+  - python=3.9
   - black
+  - numpy
+  - scipy
+  - matplotlib
+  - scikit-learn
+  - h5py
   - pip
   - pip:
     - law
     - luigi
+    - torch
+    - uproot
+    - awkward
