@@ -71,6 +71,7 @@ for domain in \
     "statsig.anthropic.com" \
     "statsig.com" \
     "marketplace.visualstudio.com" \
+    "arxiv.org" \
     "vscode.blob.core.windows.net" \
     "update.code.visualstudio.com"; do
     echo "Resolving $domain..."
