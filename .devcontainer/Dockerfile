@@ -1,9 +1,15 @@
-FROM node:20
+# Use the official Conda image
+FROM continuumio/miniconda3:latest
 
 ARG TZ
 ENV TZ="$TZ"
 
-ARG CLAUDE_CODE_VERSION=latest
+# Create researcher user
+ARG USERNAME=researcher
+RUN useradd -m -s /bin/bash $USERNAME && \
+  mkdir -p /etc/sudoers.d && \
+  echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$USERNAME && \
+  chmod 0440 /etc/sudoers.d/$USERNAME
 
 # Install basic development tools and iptables/ipset
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -11,7 +17,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   git \
   procps \
   sudo \
-  fzf \
   zsh \
   man-db \
   unzip \
@@ -25,15 +30,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   jq \
   nano \
   vim \
+  curl \
+  wget \
+  ca-certificates \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Ensure default node user has access to /usr/local/share
+# Set up directories with proper permissions
 RUN mkdir -p /usr/local/share/npm-global && \
-  chown -R node:node /usr/local/share
+  chown -R $USERNAME:$USERNAME /usr/local/share
 
-ARG USERNAME=node
+# Install fzf from GitHub (newer version with full shell integration)
+RUN git clone --depth 1 https://github.com/junegunn/fzf.git /opt/fzf && \
+  /opt/fzf/install --bin && \
+  ln -sf /opt/fzf/bin/fzf /usr/local/bin/fzf
 
-# Persist bash history.
+# Persist bash history
 RUN SNIPPET="export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history" \
   && mkdir /commandhistory \
   && touch /commandhistory/.bash_history \
@@ -43,8 +54,8 @@ RUN SNIPPET="export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhisto
 ENV DEVCONTAINER=true
 
 # Create workspace and config directories and set permissions
-RUN mkdir -p /workspace /home/node/.claude && \
-  chown -R node:node /workspace /home/node/.claude
+RUN mkdir -p /workspace /home/$USERNAME/.claude && \
+  chown -R $USERNAME:$USERNAME /workspace /home/$USERNAME/.claude
 
 WORKDIR /workspace
 
@@ -54,8 +65,17 @@ RUN ARCH=$(dpkg --print-architecture) && \
   sudo dpkg -i "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb" && \
   rm "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb"
 
+# Install Node
+RUN conda install -c conda-forge nodejs
+
+# Verify Node installation
+RUN node --version
+
+# Install Claude
+RUN npm install -g @anthropic-ai/claude-code@latest
+
 # Set up non-root user
-USER node
+USER researcher
 
 # Install global packages
 ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global
@@ -72,20 +92,16 @@ ENV VISUAL=nano
 ARG ZSH_IN_DOCKER_VERSION=1.2.0
 RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/v${ZSH_IN_DOCKER_VERSION}/zsh-in-docker.sh)" -- \
   -p git \
-  -p fzf \
-  -a "source /usr/share/doc/fzf/examples/key-bindings.zsh" \
-  -a "source /usr/share/doc/fzf/examples/completion.zsh" \
   -a "export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history" \
+  -a "source /opt/fzf/shell/key-bindings.zsh" \
+  -a "source /opt/fzf/shell/completion.zsh" \
   -x
-
-# Install Claude
-RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
-
 
 # Copy and set up firewall script
 COPY init-firewall.sh /usr/local/bin/
 USER root
 RUN chmod +x /usr/local/bin/init-firewall.sh && \
-  echo "node ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/node-firewall && \
-  chmod 0440 /etc/sudoers.d/node-firewall
-USER node
+  mkdir -p /etc/sudoers.d && \
+  echo "researcher ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/researcher-firewall && \
+  chmod 0440 /etc/sudoers.d/researcher-firewall
+USER researcher
