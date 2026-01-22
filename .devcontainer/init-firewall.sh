@@ -72,6 +72,12 @@ for domain in \
     "statsig.com" \
     "marketplace.visualstudio.com" \
     "arxiv.org" \
+    "repo.anaconda.com" \
+    "conda.anaconda.org" \
+    "pypi.org" \
+    "files.pythonhosted.org" \
+    "download.pytorch.org" \
+    "zenodo.org" \
     "vscode.blob.core.windows.net" \
     "update.code.visualstudio.com"; do
     echo "Resolving $domain..."
