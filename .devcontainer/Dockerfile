@@ -1,15 +1,10 @@
-# Use the official Conda image
-FROM continuumio/miniconda3:latest
+FROM node:20
 
 ARG TZ
 ENV TZ="$TZ"
 
-# Create researcher user
+ARG CLAUDE_CODE_VERSION=latest
 ARG USERNAME=researcher
-RUN useradd -m -s /bin/bash $USERNAME && \
-  mkdir -p /etc/sudoers.d && \
-  echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$USERNAME && \
-  chmod 0440 /etc/sudoers.d/$USERNAME
 
 # Install basic development tools and iptables/ipset
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -30,12 +25,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   jq \
   nano \
   vim \
-  curl \
-  wget \
-  ca-certificates \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Set up directories with proper permissions
+# Rename the existing node user/group to $USERNAME
+RUN groupmod -n $USERNAME node && \
+  usermod -l $USERNAME -d /home/$USERNAME -m -s /bin/zsh node
+
+# Ensure $USERNAME user has access to /usr/local/share
 RUN mkdir -p /usr/local/share/npm-global && \
   chown -R $USERNAME:$USERNAME /usr/local/share
 
@@ -65,17 +61,8 @@ RUN ARCH=$(dpkg --print-architecture) && \
   sudo dpkg -i "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb" && \
   rm "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb"
 
-# Install Node
-RUN conda install -c conda-forge nodejs
-
-# Verify Node installation
-RUN node --version
-
-# Install Claude
-RUN npm install -g @anthropic-ai/claude-code@latest
-
 # Set up non-root user
-USER researcher
+USER $USERNAME
 
 # Install global packages
 ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global
@@ -97,11 +84,14 @@ RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/
   -a "source /opt/fzf/shell/completion.zsh" \
   -x
 
+# Install Claude
+RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}
+
+
 # Copy and set up firewall script
 COPY init-firewall.sh /usr/local/bin/
 USER root
 RUN chmod +x /usr/local/bin/init-firewall.sh && \
-  mkdir -p /etc/sudoers.d && \
-  echo "researcher ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/researcher-firewall && \
-  chmod 0440 /etc/sudoers.d/researcher-firewall
-USER researcher
+  echo "$USERNAME ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/$USERNAME-firewall && \
+  chmod 0440 /etc/sudoers.d/$USERNAME-firewall
+USER $USERNAME
