@@ -95,3 +95,19 @@ RUN chmod +x /usr/local/bin/init-firewall.sh && \
   echo "$USERNAME ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/$USERNAME-firewall && \
   chmod 0440 /etc/sudoers.d/$USERNAME-firewall
 USER $USERNAME
+
+# Install Miniforge
+USER root
+RUN wget -O Miniforge3.sh "https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-$(uname)-$(uname -m).sh" && \
+  bash Miniforge3.sh -b -p /opt/conda && \
+  rm Miniforge3.sh && \
+  /opt/conda/bin/conda config --set always_yes yes --set changeps1 no && \
+  /opt/conda/bin/conda update -q conda && \
+  chown -R $USERNAME:$USERNAME /opt/conda
+
+USER $USERNAME
+
+# Add conda to PATH and initialize for zsh
+ENV PATH=/opt/conda/bin:$PATH
+RUN /opt/conda/bin/conda init zsh && \
+  /opt/conda/bin/conda init bash
