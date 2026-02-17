@@ -48,6 +48,8 @@ Task tool call:
 
 The PDF Reader will return a structured extraction covering methodology, dataset details (with download URLs), implementation details (hyperparameters, architecture), key results, and any missing information. Use this extraction as the foundation for all subsequent phases.
 
+**Save the extraction**: Write the PDF Reader's full structured output to `output/paper_reproduction/paper_summary.md` using the Write tool. This file serves as the reference document for all subsequent phases.
+
 **2. Read up on prerequisites**
 
 Based on the PDF Reader's extraction — specifically the "Built on" and referenced methods — identify any prerequisite methodology you are not familiar with.
@@ -140,6 +142,7 @@ output/
 ├── paper_reproduction/
 │   ├── README.md                           # Summary report and instructions on how to run the code
 │   ├── paper.pdf                           # Pdf file of the paper that is reproduced
+│   ├── paper_summary.md                    # Structured extraction from the PDF Reader (methodology, datasets, hyperparameters, key results)
 │   ├── src/
 │   │   ├── model.py                        # Python source files
 │   │   ├── data.py
