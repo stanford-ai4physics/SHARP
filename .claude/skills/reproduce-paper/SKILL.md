@@ -61,15 +61,32 @@ subagents in parallel for multiple references.
 
 **3. Create Execution Plan**
 
-<!-- TODO: add the `/replication-planner` subagent -->
-<!-- Use `/replication-planner` to create a structured plan covering: -->
+Launch the **Planner subagent** to create a structured execution plan:
 
-Using the PDF Reader's structured extraction, create a plan covering:
+```
+Task tool call:
+  subagent_type: "general-purpose"
+  prompt: |
+    <instructions>
+    {{.claude/subagents/planner.md}}
+    </instructions>
+
+    Here is the paper extraction:
+    <paper_summary>
+    {{contents of output/paper_reproduction/paper_summary.md}}
+    </paper_summary>
+
+    Create a reproduction plan targeting: [specific figures/results, or "all key results"]
+```
+
+The Planner will return a structured JSON plan covering:
 
 - Method implementation steps — derived from the "Methodology" and "Implementation Details" sections of the extraction
 - Dataset acquisition and preprocessing — using the download URLs and preprocessing steps from the "Dataset" section
 - Validation checkpoints — informed by the "Key Results" section (which metrics to check against, which figures to reproduce)
-- Address any gaps listed in the "Missing Information" section (decide on reasonable defaults or search for answers)
+- Assumptions made for any gaps listed in the "Missing Information" section
+
+Use this plan to drive Phases 3-5. Execute steps in dependency order, respecting review gates.
 
 ### Phase 3: Implementation
 
@@ -131,6 +148,14 @@ Use the Task tool to launch subagents for parallelizable work. Each Task call sh
 subagent_type: "general-purpose"
 prompt: include the full contents of .claude/subagents/pdf-reader.md as instructions,
         then specify the PDF path to read.
+```
+
+**Planner subagent** — for creating a structured execution plan from the paper extraction:
+
+```
+subagent_type: "general-purpose"
+prompt: include the full contents of .claude/subagents/planner.md as instructions,
+        then provide the contents of paper_summary.md and the target results.
 ```
 
 For other independent steps (e.g., reading multiple prerequisite papers), launch multiple Task calls in a single response.
