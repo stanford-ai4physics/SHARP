@@ -183,6 +183,16 @@ prompt: include the full contents of .claude/subagents/reviewer.md as instructio
 
 The Reviewer never implements or fixes anything — it only produces a structured verdict. Launch it at every review gate in the plan, and after final result production.
 
+**Script Operator subagent** — for executing scripts and managing law workflows:
+
+```
+subagent_type: "general-purpose"
+prompt: include the full contents of .claude/subagents/script-operator.md as instructions,
+        then specify the step to execute, input files, and expected outputs.
+```
+
+The Script Operator runs scripts, checks outputs, and reports results. It does not write implementation code — it executes what was written in the implementation phase. Use it for dataset downloads, running training scripts, executing evaluation, and managing `law` task workflows.
+
 For other independent steps (e.g., reading multiple prerequisite papers), launch multiple Task calls in a single response.
 
 ## Output Organization
