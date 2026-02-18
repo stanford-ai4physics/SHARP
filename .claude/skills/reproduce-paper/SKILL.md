@@ -103,10 +103,25 @@ Write Python scripts to:
 
 **5. Validate methods**
 
-<!-- TODO: add a reviewer subagent that critically evaluates the implementation and the corresponding validation -->
-
 - Validate them with toy examples (even if that is not part of the paper)
 - Compare intermediate results against any numerical values reported in the paper extraction
+
+At each **review gate** (as marked in the plan), launch the **Reviewer subagent** to verify the step's output before proceeding:
+
+```
+Task tool call:
+  subagent_type: "general-purpose"
+  prompt: |
+    <instructions>
+    {{.claude/subagents/reviewer.md}}
+    </instructions>
+
+    Review the following step: [step title]
+    Paper extraction: {{contents of output/paper_reproduction/paper_summary.md}}
+    Files to review: [list of relevant files]
+```
+
+The Reviewer will return a structured verdict (PASS / PASS WITH WARNINGS / FAIL). On FAIL, address the reported issues before continuing to the next step.
 
 Use libraries:
 
@@ -157,6 +172,16 @@ subagent_type: "general-purpose"
 prompt: include the full contents of .claude/subagents/planner.md as instructions,
         then provide the contents of paper_summary.md and the target results.
 ```
+
+**Reviewer subagent** — for verifying and validating outputs at review gates:
+
+```
+subagent_type: "general-purpose"
+prompt: include the full contents of .claude/subagents/reviewer.md as instructions,
+        then specify what to review, provide paper_summary.md, and list the files to check.
+```
+
+The Reviewer never implements or fixes anything — it only produces a structured verdict. Launch it at every review gate in the plan, and after final result production.
 
 For other independent steps (e.g., reading multiple prerequisite papers), launch multiple Task calls in a single response.
 
