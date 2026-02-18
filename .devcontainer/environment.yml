@@ -1,9 +1,17 @@
-name: template
+name: agent-env
 channels:
   - conda-forge
   - defaults
 dependencies:
   - python
+  - numpy
+  - scipy
+  - scikit-learn
+  - pandas
+  - matplotlib
+  - h5py
+  - hdf5plugin
+  - pytables
   - black
   - pip
   - pip:

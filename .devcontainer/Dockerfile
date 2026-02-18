@@ -26,6 +26,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   jq \
   nano \
   vim \
+  build-essential \
+  pkg-config \
+  libhdf5-dev \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Rename the existing node user/group to $USERNAME
