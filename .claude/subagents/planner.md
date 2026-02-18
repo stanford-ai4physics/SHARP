@@ -120,6 +120,7 @@ A typical paper reproduction plan follows this structure. Adapt as needed — no
    ├── scripts/
    └── plots/
    ```
+8. **Use the `agent-env` conda environment**: All scripts must be executed inside the `agent-env` conda environment. When specifying execution commands in step descriptions, include `conda activate agent-env` or use `conda run -n agent-env`. Any additional dependencies should be installed into this environment.
 
 ## Output Format
 

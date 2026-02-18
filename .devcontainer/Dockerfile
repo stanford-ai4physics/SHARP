@@ -112,3 +112,11 @@ USER $USERNAME
 ENV PATH=/opt/conda/bin:$PATH
 RUN /opt/conda/bin/conda init zsh && \
   /opt/conda/bin/conda init bash
+
+# Install conda env
+COPY environment.yml .
+RUN conda env create --name agent-env --file environment.yml
+
+# Activate agent-env by default
+RUN echo "conda activate agent-env" >> ~/.zshrc && \
+  echo "conda activate agent-env" >> ~/.bashrc
