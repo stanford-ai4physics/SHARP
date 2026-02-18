@@ -90,12 +90,82 @@ Use this plan to drive Phases 3-5. Execute steps in dependency order, respecting
 
 ### Phase 3: Implementation
 
-**4. Implement methods**
+**IMPORTANT: All implementation code MUST be structured as `law` tasks.** Do NOT write monolithic Python scripts that run the entire pipeline. Instead, decompose the reproduction into discrete `law.Task` classes with explicit dependencies, inputs, and outputs. This ensures reproducibility, re-runnability of individual steps, and a clear dependency graph.
 
-Write Python scripts to:
+**All code must live inside `output/paper_reproduction/`.** Do NOT modify or add files to the main repository's `src/`, `law.cfg`, or any other top-level files. The reproduction must be fully self-contained.
 
-<!-- TODO: add subagent for plotting -->
+The repository provides a `BaseTask` class in `src/base.py` with convenience methods (`local_target()`, `local_directory_target()`, `store_parts()`). Import and inherit from it, but do not modify it.
 
+**4. Implement methods as law tasks**
+
+Structure the reproduction as a chain of `law.Task` classes. Each step in the pipeline should be its own task with:
+- `requires()` declaring dependencies on upstream tasks
+- `output()` declaring the files this task produces (using `self.local_target()`)
+- `run()` containing the actual computation
+
+Create a `law.cfg` inside `output/paper_reproduction/` that registers the local task modules and sets the output directory:
+
+```ini
+# output/paper_reproduction/law.cfg
+[modules]
+src.tasks
+
+[luigi_core]
+local_scheduler: True
+```
+
+A typical reproduction pipeline should define tasks like:
+
+```python
+# In output/paper_reproduction/src/tasks.py
+from src.base import BaseTask  # import from main repo
+
+class DownloadDataset(BaseTask):
+    """Download the raw dataset."""
+    def output(self):
+        return self.local_target("data", "raw_dataset.h5")
+    def run(self):
+        # download logic
+        ...
+
+class PreprocessData(BaseTask):
+    """Apply selection cuts and feature engineering."""
+    def requires(self):
+        return DownloadDataset.req(self)
+    def output(self):
+        return self.local_target("data", "processed_splits.npz")
+    def run(self):
+        input_path = self.input().path
+        # preprocessing logic
+        ...
+
+class TrainModel(BaseTask):
+    """Train the density estimator / model."""
+    def requires(self):
+        return PreprocessData.req(self)
+    def output(self):
+        return self.local_target("models", "model_checkpoint.pt")
+    def run(self):
+        ...
+
+class Evaluate(BaseTask):
+    """Run evaluation and produce final plots."""
+    def requires(self):
+        return {"model": TrainModel.req(self), "data": PreprocessData.req(self)}
+    def output(self):
+        return self.local_target("plots", "reproduce_paper_figure_X.pdf")
+    def run(self):
+        ...
+```
+
+**Key principles:**
+- **Pure implementation code** (model architectures, loss functions, data loaders) goes in `output/paper_reproduction/src/` modules — these are imported by the tasks but are not tasks themselves.
+- **Each pipeline step** (download, preprocess, train, sample, evaluate, plot) is a separate `law.Task`.
+- **Use `law.workflow.LocalWorkflow`** when a step should be repeated (e.g., training N independent models, or sampling from N best epochs).
+- **Register tasks** in the local `output/paper_reproduction/law.cfg` under `[modules]` so they are discoverable via `law index`.
+- The full pipeline should be runnable via: `cd output/paper_reproduction && law run Evaluate` which will automatically trigger all upstream dependencies.
+
+Additionally:
 - Download / load the dataset using the source URL from the paper extraction
 - Apply preprocessing and selection cuts as specified in the extraction's "Preprocessing" field
 - Create validation plots of the features stored in the dataset (to verify that dataloading and processing doesn't contain bugs)
@@ -103,7 +173,7 @@ Write Python scripts to:
 
 **5. Validate methods**
 
-- Validate them with toy examples (even if that is not part of the paper)
+- Validate them with toy examples (even if that is not part of the paper) — these can be standalone scripts in `scripts/`, since they are not part of the main pipeline
 - Compare intermediate results against any numerical values reported in the paper extraction
 
 At each **review gate** (as marked in the plan), launch the **Reviewer subagent** to verify the step's output before proceeding:
@@ -138,6 +208,7 @@ import matplotlib      # Plotting
 - Use the implemented methods to produce the requested paper result
 - Cross-check against the metrics and values from the PDF Reader's "Key Results" section
 - If no specific result was requested, reproduce all key results identified by the PDF Reader
+- The final plotting task should depend on all upstream computation tasks, so that `law run ProduceFigureX` triggers the full pipeline automatically
 
 ### Phase 5: Documentation
 
@@ -148,7 +219,7 @@ Create a report documenting:
 - Paper reference and relevant figures reproduced
 - Any discrepancies between your results and the paper's reported values, and their likely causes
 - Output file locations
-- Make sure that the subfolder where your output is stored contains instructions on how to run the code
+- How to run the reproduction: `cd output/paper_reproduction && law run <FinalTask>` (not bare `python scripts/...`)
 
 <!-- TODO: add common pitfalls if we find any -->
 <!-- ## Common Pitfalls -->
@@ -197,21 +268,25 @@ For other independent steps (e.g., reading multiple prerequisite papers), launch
 
 ## Output Organization
 
+**Everything lives inside `output/paper_reproduction/`.** Do not add or modify files in the main repository (`src/`, `law.cfg`, etc.). The reproduction is fully self-contained with its own `law.cfg`, task definitions, source modules, and outputs.
+
 ```
-output/
-├── paper_reproduction/
-│   ├── README.md                           # Summary report and instructions on how to run the code
-│   ├── paper.pdf                           # Pdf file of the paper that is reproduced
-│   ├── paper_summary.md                    # Structured extraction from the PDF Reader (methodology, datasets, hyperparameters, key results)
-│   ├── src/
-│   │   ├── model.py                        # Python source files
-│   │   ├── data.py
-│   │   └── ...
-│   ├── scripts/
-│   │   ├── dataset_validation.py           # Analysis script
-│   │   └── histograms.npz                  # Computed histograms
-│   └── plots/
-│       ├── reproduce_paper_figure_3a.pdf   # Reproduced figures
-│       ├── dataset_validation.pdf
-│       └── ...
+output/paper_reproduction/
+├── README.md                              # Summary report and how to run (law commands)
+├── paper.pdf                              # Pdf file of the paper that is reproduced
+├── paper_summary.md                       # Structured extraction from the PDF Reader
+├── law.cfg                                # Law configuration registering local task modules
+├── src/
+│   ├── tasks.py                           # Law task definitions (DownloadDataset, PreprocessData, Train, Evaluate, ...)
+│   ├── data.py                            # Data loading and preprocessing utilities
+│   ├── model.py                           # Model architectures (imported by tasks)
+│   └── ...
+├── scripts/
+│   └── toy_validation.py                  # Toy tests (standalone, not part of law pipeline)
+├── data/                                  # Downloaded / processed data (law task outputs)
+├── models/                                # Trained model checkpoints (law task outputs)
+└── plots/
+    ├── reproduce_paper_figure_X.pdf       # Reproduced figures (law task outputs)
+    ├── dataset_validation.pdf
+    └── ...
 ```
