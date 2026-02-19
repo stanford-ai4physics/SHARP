@@ -71,15 +71,36 @@ for domain in \
     "statsig.anthropic.com" \
     "statsig.com" \
     "marketplace.visualstudio.com" \
+    "vscode.blob.core.windows.net" \
+    "update.code.visualstudio.com" \
     "arxiv.org" \
+    "export.arxiv.org" \
     "repo.anaconda.com" \
     "conda.anaconda.org" \
     "pypi.org" \
     "files.pythonhosted.org" \
     "download.pytorch.org" \
+    "github.com" \
+    "inspirehep.net" \
+    "hepdata.net" \
     "zenodo.org" \
-    "vscode.blob.core.windows.net" \
-    "update.code.visualstudio.com"; do
+    "opendata.cern.ch" \
+    "cds.cern.ch" \
+    "adsabs.harvard.edu" \
+    "sdss.org" \
+    "root.cern" \
+    "root.cern.ch" \
+    "scikit-hep.org" \
+    "hub.docker.com" \
+    "registry-1.docker.io" \
+    "cdn-lfs.huggingface.co" \
+    "huggingface.co" \
+    "scipy.org" \
+    "numpy.org" \
+    "matplotlib.org" \
+    "storage.googleapis.com" \
+    "s3.amazonaws.com" \
+    "doi.org"; do
     echo "Resolving $domain..."
     ips=$(dig +noall +answer A "$domain" | awk '$4 == "A" {print $5}')
     if [ -z "$ips" ]; then
