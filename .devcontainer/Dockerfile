@@ -17,7 +17,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   git \
   procps \
   sudo \
-  zsh \
   man-db \
   unzip \
   gnupg2 \
@@ -36,8 +35,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Set up directories with proper permissions
-RUN mkdir -p /usr/local/share/npm-global && \
-  chown -R $USERNAME:$USERNAME /usr/local/share
+RUN chown -R $USERNAME:$USERNAME /usr/local/share
 
 # Install fzf from GitHub (newer version with full shell integration)
 RUN git clone --depth 1 https://github.com/junegunn/fzf.git /opt/fzf && \
@@ -65,37 +63,42 @@ RUN ARCH=$(dpkg --print-architecture) && \
   sudo dpkg -i "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb" && \
   rm "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb"
 
-# Install Node
-RUN conda install -c conda-forge nodejs
-
-# Verify Node installation
-RUN node --version
-
-# Install Claude
-RUN npm install -g @anthropic-ai/claude-code@latest
+# Install Claude Code (native installer)
+RUN curl -fsSL https://claude.ai/install.sh | bash
 
 # Set up non-root user
 USER researcher
 
-# Install global packages
-ENV NPM_CONFIG_PREFIX=/usr/local/share/npm-global
-ENV PATH=$PATH:/usr/local/share/npm-global/bin
-
-# Set the default shell to zsh rather than sh
-ENV SHELL=/bin/zsh
+# Set the default shell to bash
+ENV SHELL=/bin/bash
 
 # Set the default editor and visual
 ENV EDITOR=nano
 ENV VISUAL=nano
 
-# Default powerline10k theme
-ARG ZSH_IN_DOCKER_VERSION=1.2.0
-RUN sh -c "$(wget -O- https://github.com/deluan/zsh-in-docker/releases/download/v${ZSH_IN_DOCKER_VERSION}/zsh-in-docker.sh)" -- \
-  -p git \
-  -a "export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.bash_history" \
-  -a "source /opt/fzf/shell/key-bindings.zsh" \
-  -a "source /opt/fzf/shell/completion.zsh" \
-  -x
+# Colorful terminal: bash prompt, color aliases, and fzf
+RUN { \
+  echo ""; \
+  echo "# Colorful prompt"; \
+  echo "PS1='\\[\\e]0;\\w\\a\\]\\[\\033[01;32m\\]\\u@\\h \\[\\033[01;34m\\]\\w \\[\\033[31m\\]\$(date +%H:%M:%S) \\[\\033[01;36m\\]> \\[\\033[00m\\]'"; \
+  echo ""; \
+  echo "# Enable color support of ls and handy aliases"; \
+  echo 'if [ -x /usr/bin/dircolors ]; then'; \
+  echo '    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"'; \
+  echo "    alias ls='ls --color=auto'"; \
+  echo "    alias grep='grep --color=auto'"; \
+  echo "    alias fgrep='fgrep --color=auto'"; \
+  echo "    alias egrep='egrep --color=auto'"; \
+  echo 'fi'; \
+  echo ""; \
+  echo "# Persist history"; \
+  echo "export PROMPT_COMMAND='history -a'"; \
+  echo "export HISTFILE=/commandhistory/.bash_history"; \
+  echo ""; \
+  echo "# fzf key bindings and completion"; \
+  echo "source /opt/fzf/shell/key-bindings.bash"; \
+  echo "source /opt/fzf/shell/completion.bash"; \
+  } >> /home/researcher/.bashrc
 
 # Copy and set up firewall script
 COPY init-firewall.sh /usr/local/bin/
