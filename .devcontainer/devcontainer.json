@@ -10,6 +10,7 @@
     }
   },
   "runArgs": [
+    "--platform=linux/arm64",
     "--cap-add=NET_ADMIN",
     "--cap-add=NET_RAW"
   ],

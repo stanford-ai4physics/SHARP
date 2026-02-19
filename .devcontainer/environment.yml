@@ -6,6 +6,14 @@ dependencies:
   - python
   - black
   - pip
+  - numpy
+  - scipy
+  - scikit-learn
+  - pandas
+  - matplotlib
+  - h5py
+  - hdf5plugin
+  - pytables
   - pip:
     - law
     - luigi
