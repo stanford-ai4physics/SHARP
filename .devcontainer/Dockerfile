@@ -63,9 +63,6 @@ RUN ARCH=$(dpkg --print-architecture) && \
   sudo dpkg -i "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb" && \
   rm "git-delta_${GIT_DELTA_VERSION}_${ARCH}.deb"
 
-# Install Claude Code (native installer)
-RUN curl -fsSL https://claude.ai/install.sh | bash
-
 # Set up non-root user
 USER researcher
 
@@ -99,6 +96,10 @@ RUN { \
   echo "source /opt/fzf/shell/key-bindings.bash"; \
   echo "source /opt/fzf/shell/completion.bash"; \
   } >> /home/researcher/.bashrc
+
+# Install Claude Code (native installer, as researcher user)
+ENV PATH="/home/researcher/.local/bin:$PATH"
+RUN curl -fsSL https://claude.ai/install.sh | bash
 
 # Copy and set up firewall script
 COPY init-firewall.sh /usr/local/bin/
