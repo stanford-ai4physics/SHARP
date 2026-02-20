@@ -93,8 +93,7 @@ for domain in \
     "scikit-hep.org" \
     "hub.docker.com" \
     "registry-1.docker.io" \
-    "cdn-lfs.huggingface.co" \
-    "huggingface.co" \
+    "huggingface.com" \
     "scipy.org" \
     "numpy.org" \
     "matplotlib.org" \
