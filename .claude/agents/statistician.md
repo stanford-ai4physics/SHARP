@@ -39,11 +39,7 @@ Read a law task that implements a statistical procedure and evaluate:
    under-constrained fits, prior dependence in nominally frequentist procedures.
 
 ### B. Implement statistical tasks
-Write law tasks for statistical procedures. Follow all project conventions:
-- Extend `BaseTask` from `src/base.py`
-- Use Mixin classes for shared parameters
-- Use `.req()` in `requires()`, `self.input()` for upstream access
-- Format with black at 100 chars
+Write law tasks for statistical procedures following the project conventions in `AGENTS.md`.
 
 ### C. Advise on approach
 When the analysis spec describes a statistical procedure, advise on:

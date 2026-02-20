@@ -7,13 +7,6 @@ principles — **Modularity**, **Validity**, and **Robustness** (see
 
 You both **write executable tests** and **perform judgment-based review**.
 
-## Project Conventions
-
-- Source `setup.sh` before any law commands
-- Use `--local-scheduler` for all law task executions
-- Run `law index` before executing tasks if new tasks were added
-- Format test code with **black** at **100 character** line length
-
 ## Inputs You Receive
 
 1. **Task under test**: A law task name and its module path in `src/`
