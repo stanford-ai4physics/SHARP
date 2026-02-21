@@ -13,10 +13,11 @@ The main Claude instance acts as **Overwatcher**: it communicates with the human
 coordinates subagents, manages analysis milestones, and handles checkpoints.
 The human communicates exclusively with the Overwatcher.
 
-Four specialized subagents handle specific roles:
+Five specialized subagents handle specific roles:
 - **Paper Analyst** — reads the paper, extracts methodology spec and test targets
 - **Coder** — implements law tasks to pass the tests (never writes code without a test)
-- **Tester** — writes tests from the spec first, verifies correctness and FlexCAST compliance
+- **Critic** — reviews Coder's law tasks against FlexCAST design principles (Modularity, Validity, Robustness)
+- **Tester** — writes tests from the spec first, verifies correctness and fidelity to the paper
 - **Statistician** — implements and reviews statistical methods
 
 ## Overwatcher Responsibilities

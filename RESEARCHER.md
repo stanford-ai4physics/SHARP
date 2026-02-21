@@ -29,13 +29,15 @@ Delegate to specialized subagents as appropriate:
 - **Paper Analyst** → extract methodology spec and test targets from the paper in `source/`
 - **Tester** → write tests from the spec before any implementation, then verify after
 - **Coder** → implement law tasks to pass the tests (never implements without tests)
+- **Critic** → review Coder's law tasks against FlexCAST design principles
 - **Statistician** → review or implement statistical components
 
-The TDD discipline is strict:
+The standard milestone workflow is:
 1. Tester writes tests derived from the Paper Analyst spec
 2. Coder implements to pass those tests
-3. Tester verifies — if FAIL, Coder fixes, repeat
-4. Only when Tester returns PASS or PARTIAL (with no blockers) does the milestone pass
+3. Critic reviews the implementation for FlexCAST compliance — if NEEDS FIXES, Coder fixes, repeat
+4. Tester verifies — if FAIL, Coder fixes, repeat
+5. Only when Critic returns PASS and Tester returns PASS or PARTIAL (with no blockers) does the milestone pass
 
 When the milestone is done:
 - Run `black --line-length 100 src/` and `pytest tests/` to confirm quality
