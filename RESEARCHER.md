@@ -33,17 +33,58 @@ Delegate to specialized subagents as appropriate:
 - **Statistician** → review or implement statistical components
 
 The standard milestone workflow is:
+
 1. Tester writes tests derived from the Paper Analyst spec
 2. Coder implements to pass those tests
-3. Critic reviews the implementation for FlexCAST compliance — if NEEDS FIXES, Coder fixes, repeat
-4. Tester verifies — if FAIL, Coder fixes, repeat
-5. Only when Critic returns PASS and Tester returns PASS or PARTIAL (with no blockers) does the milestone pass
+3. **Verification gate** — run the checks below; if anything fails, Coder fixes before continuing
+4. Critic reviews the implementation for FlexCAST compliance — if NEEDS FIXES, Coder fixes, repeat
+5. Tester verifies — if FAIL, Coder fixes, repeat
+6. Only when Critic returns PASS and Tester returns PASS or PARTIAL (with no blockers) does the milestone pass
 
-When the milestone is done:
-- Run `black --line-length 100 src/` and `pytest tests/` to confirm quality
+### Verification Gate (mandatory before marking any milestone as done)
+
+Every milestone that adds or modifies code **must** pass these checks before it can
+be marked `passes: true`. Run them, read the output, and fix any failures.
+
+```bash
+# 1. Formatting
+black --check --line-length 100 src/ tests/
+
+# 2. Syntax & import check — every Python file must be importable
+python -c "
+import importlib, pathlib, sys
+errors = []
+for f in sorted(pathlib.Path('src').rglob('*.py')):
+    mod = str(f.with_suffix('')).replace('/', '.')
+    try:
+        importlib.import_module(mod)
+    except Exception as e:
+        errors.append(f'{f}: {e}')
+if errors:
+    print('IMPORT ERRORS:'); [print(e) for e in errors]; sys.exit(1)
+print('All imports OK')
+"
+
+# 3. Law index — confirm law can discover all tasks
+source setup.sh && law index --verbose
+
+# 4. Tests
+pytest tests/ -v
+```
+
+**Rules:**
+- Do NOT skip the verification gate, even if you are confident the code is correct.
+- Do NOT mark a milestone as `passes: true` if any check fails.
+- If a check fails, fix the issue and re-run **all** checks (not just the failing one).
+- Log the final check results in the progress entry.
+
+### When the milestone is done
+
+After the verification gate passes:
+
 - Commit all changes: `git commit -m "[milestone-id] - [milestone-title]"`
 - Update `project.json` to set `passes: true` for the completed milestone
-- Append a progress entry to `progress.txt`
+- Append a progress entry to `progress.txt` (include verification gate results)
 
 ## Progress Entry Format
 
