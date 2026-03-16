@@ -109,10 +109,32 @@ When you reach Case A (checkpoint awaiting approval):
    ## CHECKPOINT [Milestone ID]: [Milestone Title]
    Status: awaiting human review
    Summary: [2-3 sentences: what was achieved, key results, any concerns]
-   To approve: set "checkpoint_approved": true in project.json and re-run researcher.sh
+
+   ### Key files changed
+   - src/foo.py — [what it does]
+   - tests/test_foo.py — [what it tests]
+
+   ### How to verify
+   - `source setup.sh`
+   - `pytest tests/ -v` — run all tests
+   - `law run SomeTask --local-scheduler` — run the key task from this milestone
+   - [any other milestone-specific commands the human should try]
+
+   ### Verification gate results
+   - black: PASS
+   - imports: PASS
+   - law index: PASS
+   - pytest: PASS (N tests)
+
+   To approve: set "checkpoint_approved": true for [Milestone ID] in project.json
+   To reject: set "passes": false, add feedback below, and re-run researcher.sh
    ---
    ```
 2. Signal `NEEDS_REVIEW` — the loop will stop and the human will be notified.
+
+**Important:** The "How to verify" section must include concrete, copy-pasteable commands
+specific to this milestone — not just generic instructions. If the milestone adds a law
+task, show the `law run` command. If it produces plots, say where to find them.
 
 ## project.json Format
 
