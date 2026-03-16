@@ -6,7 +6,7 @@ milestone, then stop. The human communicates with you between iterations.
 
 ## Your Task Each Iteration
 
-1. Read `project.json` (same directory as this file) to understand the analysis and its milestones
+1. Read `project.json` (same directory as this file) to understand the analysis, its milestones, and any `instructions` that scope the work
 2. Read `progress.txt` to understand what has been done and what was learned
 3. Check you are on the correct branch from `project.json` `branchName`. If not, check it out or create from main.
 4. Identify the current situation — one of three cases:
@@ -80,6 +80,11 @@ When you reach Case A (checkpoint awaiting approval):
   "paper": "arXiv:XXXX.XXXXX",
   "title": "Short analysis title",
   "branchName": "reimplementation/paper-name",
+  "instructions": [
+    "Only reproduce Table II (top tagging performance)",
+    "Use ParticleNet-Lite architecture only",
+    "Skip quark/gluon discrimination"
+  ],
   "milestones": [
     {
       "id": "M-001",
@@ -92,6 +97,21 @@ When you reach Case A (checkpoint awaiting approval):
   ]
 }
 ```
+
+### `instructions` field
+
+The `instructions` array is **optional but recommended**. Use it to scope the analysis
+before any milestones are generated. Each entry is a discrete constraint that the
+Overwatcher and all subagents must respect. Examples:
+
+- Limit which results/tables/figures to reproduce
+- Specify a simplified or "lite" variant of the method
+- Exclude parts of the paper
+- Set resource constraints (e.g. "train for max 10 epochs for validation")
+
+When generating milestones (via `/setup` or interactively), the Overwatcher reads
+`instructions` first and tailors the milestone plan accordingly. Instructions are
+also re-read at each iteration to ensure scope is respected throughout.
 
 ## Stop Conditions
 
