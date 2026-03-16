@@ -95,16 +95,8 @@ for i in $(seq 1 $MAX_ITERATIONS); do
     OUTPUT=$(claude --dangerously-skip-permissions --print < "$SCRIPT_DIR/RESEARCHER.md" 2>&1 | tee /dev/stderr) || true
   fi
   
-  # Check for completion signal
-  if echo "$OUTPUT" | grep -q "<promise>COMPLETE</promise>"; then
-    echo ""
-    echo "Analysis complete — all milestones passed and approved!"
-    echo "Completed at iteration $i of $MAX_ITERATIONS"
-    exit 0
-  fi
-
-  # Check for human review signal
-  if echo "$OUTPUT" | grep -q "<promise>NEEDS_REVIEW</promise>"; then
+  # Check for human review signal first (takes priority over completion)
+  if echo "$OUTPUT" | grep -qE "(<promise>NEEDS_REVIEW</promise>|NEEDS_REVIEW)"; then
     echo ""
     echo "================================================================"
     echo "  CHECKPOINT REACHED — Human review required"
@@ -118,6 +110,14 @@ for i in $(seq 1 $MAX_ITERATIONS); do
     echo "  2. Set \"checkpoint_approved\": true in project.json"
     echo "  3. Re-run: ./researcher.sh --tool $TOOL $MAX_ITERATIONS"
     echo ""
+    exit 0
+  fi
+
+  # Check for completion signal
+  if echo "$OUTPUT" | grep -qE "(<promise>COMPLETE</promise>|^COMPLETE$)"; then
+    echo ""
+    echo "Analysis complete — all milestones passed and approved!"
+    echo "Completed at iteration $i of $MAX_ITERATIONS"
     exit 0
   fi
 

@@ -176,15 +176,20 @@ When generating milestones (via `/setup` or interactively), the Overwatcher read
 `instructions` first and tailors the milestone plan accordingly. Instructions are
 also re-read at each iteration to ensure scope is respected throughout.
 
-## Stop Conditions
+## Stop Signals — CRITICAL
 
-If ALL milestones pass and all checkpoints are approved:
+You MUST end your response with one of these **exact verbatim strings** when applicable.
+Do NOT paraphrase, reformat, or wrap them in markdown. Copy them character-for-character.
+
+If ALL milestones pass and all checkpoints are approved, end your response with exactly:
 <promise>COMPLETE</promise>
 
-If a checkpoint milestone passes but is not yet approved by the human:
+If a checkpoint milestone passes but is not yet approved by the human, end your response with exactly:
 <promise>NEEDS_REVIEW</promise>
 
 Otherwise end your response normally — the next iteration will continue.
+
+These signal strings are parsed by the outer loop. If you do not output them exactly, the loop will not stop.
 
 ## Important
 
