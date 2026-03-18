@@ -39,6 +39,54 @@ echo "SUBNET_ID=${SUBNET_ID}"
     create_role_if_missing ECSTaskRole \
         arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
 
+    # --- EC2 instance role for ECS ---
+    INSTANCE_ROLE="ecsInstanceRole"
+    if aws iam get-role --role-name "$INSTANCE_ROLE" &>/dev/null; then
+        echo "$INSTANCE_ROLE already exists, skipping."
+    else
+        echo "Creating $INSTANCE_ROLE..."
+        aws iam create-role \
+            --role-name "$INSTANCE_ROLE" \
+            --assume-role-policy-document "file://${_SETUP_SCRIPT_DIR}/ec2-trust-policy.json"
+        aws iam attach-role-policy \
+            --role-name "$INSTANCE_ROLE" \
+            --policy-arn arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+        aws iam attach-role-policy \
+            --role-name "$INSTANCE_ROLE" \
+            --policy-arn arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+    fi
+
+    # --- Instance profile (required wrapper for EC2 roles) ---
+    INSTANCE_PROFILE="ecsInstanceProfile"
+    if aws iam get-instance-profile --instance-profile-name "$INSTANCE_PROFILE" &>/dev/null; then
+        echo "$INSTANCE_PROFILE already exists, skipping."
+    else
+        echo "Creating instance profile $INSTANCE_PROFILE..."
+        aws iam create-instance-profile --instance-profile-name "$INSTANCE_PROFILE"
+        aws iam add-role-to-instance-profile \
+            --instance-profile-name "$INSTANCE_PROFILE" \
+            --role-name "$INSTANCE_ROLE"
+    fi
+
+    # --- Security group for EC2 instance ---
+    SG_NAME="ecs-instance-sg"
+    EXISTING_SG=$(aws ec2 describe-security-groups \
+        --filters "Name=group-name,Values=$SG_NAME" \
+        --query "SecurityGroups[0].GroupId" --output text 2>/dev/null)
+
+    if [ "$EXISTING_SG" != "None" ] && [ -n "$EXISTING_SG" ]; then
+        echo "Security group $SG_NAME already exists ($EXISTING_SG), skipping."
+    else
+        echo "Creating security group $SG_NAME..."
+        VPC_ID=$(aws ec2 describe-subnets \
+            --subnet-ids "$SUBNET_ID" \
+            --query "Subnets[0].VpcId" --output text)
+        aws ec2 create-security-group \
+            --group-name "$SG_NAME" \
+            --description "Security group for ECS EC2 instances" \
+            --vpc-id "$VPC_ID" > /dev/null
+    fi
+
     # --- CloudWatch log group ---
     LOG_GROUP="/ecs/agent-container"
     if aws logs describe-log-groups --log-group-name-prefix "$LOG_GROUP" \
@@ -49,6 +97,19 @@ echo "SUBNET_ID=${SUBNET_ID}"
         aws logs create-log-group --log-group-name "$LOG_GROUP"
     fi
 )
+
+export SG_ID=$(aws ec2 describe-security-groups \
+    --filters "Name=group-name,Values=ecs-instance-sg" \
+    --query "SecurityGroups[0].GroupId" --output text)
+echo "SG_ID=${SG_ID}"
+
+# --- ECS-optimized AMI (Amazon Machine Image = OS image for EC2 instances) ---
+# For GPU instances, use the gpu variant instead:
+#   /aws/service/ecs/optimized-ami/amazon-linux-2/gpu/recommended
+export AMI_ID=$(aws ssm get-parameters \
+    --names /aws/service/ecs/optimized-ami/amazon-linux-2/recommended \
+    --query "Parameters[0].Value" --output text | jq -r '.image_id')
+echo "AMI_ID=${AMI_ID}"
 
 unset _SETUP_SCRIPT_DIR
 echo "Done."

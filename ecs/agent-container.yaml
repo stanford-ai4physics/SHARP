@@ -1,10 +1,7 @@
 family: agent-container
-networkMode: awsvpc
+networkMode: bridge
 requiresCompatibilities:
-  - FARGATE
-# enableExecuteCommand: true
-cpu: "256" # 0.25 vCPU
-memory: "512" # 0.5 GB
+  - EC2
 executionRoleArn: arn:aws:iam::${AWS_ACCOUNT_ID}:role/ECSTaskExecutionRole
 taskRoleArn: arn:aws:iam::${AWS_ACCOUNT_ID}:role/ECSTaskRole
 containerDefinitions:
@@ -12,9 +9,20 @@ containerDefinitions:
     image: ${AWS_ACCOUNT_ID}.dkr.ecr.eu-central-1.amazonaws.com/agent-image:latest
     essential: true
     command: ["/bin/sh", "-c", "echo 'container initialized' && tail -f /dev/null"]
+    cpu: 1024 # 1 vCPU (t3.small)
+    memory: 1792 # 1.75 GB (leaving 256 MB for ECS agent + OS)
+    # --- GPU support ---
+    # To enable GPU, uncomment the block below and use a GPU instance
+    # (e.g., g4dn.xlarge). Also adjust cpu/memory to match the instance.
+    # See README.md for details.
+    # resourceRequirements:
+    #   - type: GPU
+    #     value: "1"
     logConfiguration:
       logDriver: awslogs
       options:
         awslogs-group: /ecs/agent-container
         awslogs-region: eu-central-1
         awslogs-stream-prefix: researcher
+    linuxParameters:
+      initProcessEnabled: true
