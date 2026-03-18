@@ -12,3 +12,9 @@ containerDefinitions:
     image: ${AWS_ACCOUNT_ID}.dkr.ecr.eu-central-1.amazonaws.com/agent-image:latest
     essential: true
     command: ["/bin/sh", "-c", "echo 'container initialized' && tail -f /dev/null"]
+    logConfiguration:
+      logDriver: awslogs
+      options:
+        awslogs-group: /ecs/agent-container
+        awslogs-region: eu-central-1
+        awslogs-stream-prefix: researcher

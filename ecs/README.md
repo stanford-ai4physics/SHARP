@@ -108,6 +108,16 @@ envsubst < ecs/agent-container.yaml > /tmp/agent-container.yaml
 aws ecs register-task-definition --cli-input-yaml file:///tmp/agent-container.yaml
 ```
 
+## Logging
+
+Container stdout/stderr is shipped to **CloudWatch Logs** via the `awslogs` log driver configured in the task definition. The log group `/ecs/agent-container` is created automatically by the setup script.
+
+View logs in the AWS Console under **CloudWatch → Log groups → /ecs/agent-container**, or from the CLI:
+
+```bash
+aws logs tail /ecs/agent-container --follow
+```
+
 ## Running
 
 Make sure you have run `source ./ecs/setup-ecs.sh` in your current shell first (step 1).
