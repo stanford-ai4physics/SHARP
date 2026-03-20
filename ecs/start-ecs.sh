@@ -21,6 +21,12 @@ done
 
 # --- 1. Load environment variables ---
 echo "==> Loading environment..."
+if [ -f "${_START_SCRIPT_DIR}/.env" ]; then
+    echo "Loading ecs/.env..."
+    set -a
+    . "${_START_SCRIPT_DIR}/.env"
+    set +a
+fi
 source "${_START_SCRIPT_DIR}/setup-ecs.sh"
 
 # --- 2. Register task definition (always re-register to pick up changes) ---
@@ -75,13 +81,37 @@ done
 
 # --- 5. Run the task (with retries — placement can fail right after instance registers) ---
 echo "==> Starting ECS task..."
+
+# Build the environment overrides
+_ENV_OVERRIDES=""
 if [ "$_SSH_ENABLED" = true ]; then
     if [ ! -f ~/.ssh/id_rsa_aws_agent_project.pub ]; then
-        echo "ERROR: ~/.ssh/id_rsa_aws_agent_project.pub not found. Provide a public key or run without --ssh."
-        unset _START_SCRIPT_DIR _SSH_ENABLED _EXISTING_INSTANCE _i _COUNT
+        echo "ERROR: ~/.ssh/id_rsa_aws_agent_project.pub not found. Generate it first or use --no-ssh."
+        unset _START_SCRIPT_DIR _SSH_ENABLED _EXISTING_INSTANCE _i _CONNECTED _AGENT_CONNECTED
         return 1 2>/dev/null || exit 1
     fi
     _PUBKEY=$(cat ~/.ssh/id_rsa_aws_agent_project.pub)
+    _ENV_OVERRIDES="{\"name\":\"SSH_PUBKEY\",\"value\":\"${_PUBKEY}\"}"
+fi
+if [ -n "${GH_TOKEN:-}" ]; then
+    if [ -n "$_ENV_OVERRIDES" ]; then
+        _ENV_OVERRIDES="${_ENV_OVERRIDES},"
+    fi
+    _ENV_OVERRIDES="${_ENV_OVERRIDES}{\"name\":\"GH_TOKEN\",\"value\":\"${GH_TOKEN}\"}"
+else
+    echo "WARNING: GH_TOKEN not set — repo will not be cloned in the container."
+fi
+if [ -n "${GH_REPO:-}" ]; then
+    if [ -n "$_ENV_OVERRIDES" ]; then
+        _ENV_OVERRIDES="${_ENV_OVERRIDES},"
+    fi
+    _ENV_OVERRIDES="${_ENV_OVERRIDES}{\"name\":\"GH_REPO\",\"value\":\"${GH_REPO}\"}"
+fi
+
+# Build the --overrides flag if we have any env vars to pass
+_OVERRIDES_FLAG=""
+if [ -n "$_ENV_OVERRIDES" ]; then
+    _OVERRIDES_FLAG="--overrides {\"containerOverrides\":[{\"name\":\"researcher\",\"environment\":[${_ENV_OVERRIDES}]}]}"
 fi
 
 _TASK_ARN="None"
@@ -93,21 +123,13 @@ while [ "$_TASK_ARN" = "None" ] && [ $_attempt -lt 10 ]; do
         sleep 5
     fi
 
-    if [ "$_SSH_ENABLED" = true ]; then
+    if [ -n "$_OVERRIDES_FLAG" ]; then
         _RUN_RESULT=$(aws ecs run-task \
             --cluster my-agent-test-cluster \
             --launch-type EC2 \
             --task-definition agent-container \
             --enable-execute-command \
-            --overrides "{
-              \"containerOverrides\": [{
-                \"name\": \"researcher\",
-                \"environment\": [{
-                  \"name\": \"SSH_PUBKEY\",
-                  \"value\": \"${_PUBKEY}\"
-                }]
-              }]
-            }" 2>&1) || true
+            --overrides "{\"containerOverrides\":[{\"name\":\"researcher\",\"environment\":[${_ENV_OVERRIDES}]}]}" 2>&1) || true
     else
         _RUN_RESULT=$(aws ecs run-task \
             --cluster my-agent-test-cluster \
@@ -188,4 +210,4 @@ echo "  aws logs tail /ecs/agent-container --follow"
 echo ""
 echo "========================================="
 
-unset _START_SCRIPT_DIR _SSH_ENABLED _EXISTING_INSTANCE _i _COUNT _PUBKEY _TASK_ARN _RUN_RESULT _FAILURE _attempt _PUBLIC_IP _task_running _STATUS _w
+unset _START_SCRIPT_DIR _SSH_ENABLED _EXISTING_INSTANCE _i _CONNECTED _AGENT_CONNECTED _PUBKEY _ENV_OVERRIDES _OVERRIDES_FLAG _TASK_ARN _RUN_RESULT _FAILURE _attempt _PUBLIC_IP _task_running _STATUS _w
