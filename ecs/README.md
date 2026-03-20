@@ -36,7 +36,7 @@ The deployment involves:
 Generate a dedicated SSH key for this project (first time only):
 
 ```bash
-ssh-keygen -t ed25519 -f ~/.ssh/id_rsa_aws_agent_project -C "ecs-agent-project" -N ""
+ssh-keygen -t ed25519 -f ~/.ssh/id_rsa_aws_agent_project -C "ecs-agent-project"
 ```
 
 This creates `~/.ssh/id_rsa_aws_agent_project` (private) and `~/.ssh/id_rsa_aws_agent_project.pub` (public). The public key is automatically injected into the container at launch. To connect, use:
@@ -47,7 +47,7 @@ ssh -p 2222 -i ~/.ssh/id_rsa_aws_agent_project researcher@<PUBLIC_IP>
 
 #### Environment file (`ecs/.env`)
 
-The container can clone a GitHub repository at startup. Configuration is stored in a local `ecs/.env` file (git-ignored, never committed).
+The container can clone our GitHub repository at startup. Configuration is stored in a local `ecs/.env` file (git-ignored, never committed).
 
 Copy the example and fill in your values:
 
@@ -62,7 +62,8 @@ Edit `ecs/.env`:
 GH_TOKEN=github_pat_...
 
 # GitHub repository to clone into the container (owner/repo)
-GH_REPO=YourUser/your-repo
+# Has to be owned by the same user as the token
+GH_REPO=YourUser/agent_template
 ```
 
 **Creating a GitHub token** (first time only):
@@ -76,7 +77,13 @@ The `start-ecs.sh` script automatically sources `ecs/.env` and passes both varia
 
 #### AWS authentication
 
-First, set your default region (you can skip the access key prompts by pressing Enter):
+Then log in via the browser:
+
+```bash
+aws login
+```
+
+Set your default region (you can skip the access key prompts by pressing Enter):
 
 ```bash
 aws configure
@@ -87,12 +94,6 @@ AWS Access Key ID [None]:
 AWS Secret Access Key [None]:
 Default region name [None]: us-west-1
 Default output format [None]:
-```
-
-Then log in via the browser:
-
-```bash
-aws login
 ```
 
 ### 1. Run the setup script
