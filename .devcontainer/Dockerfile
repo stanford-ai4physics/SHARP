@@ -32,7 +32,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   curl \
   wget \
   ca-certificates \
+  openssh-server \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Configure SSH: create runtime directory and disable password authentication
+RUN mkdir -p /run/sshd && \
+  sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config && \
+  sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config
 
 # Set up directories with proper permissions
 RUN chown -R $USERNAME:$USERNAME /usr/local/share
@@ -108,4 +114,9 @@ RUN chmod +x /usr/local/bin/init-firewall.sh && \
   mkdir -p /etc/sudoers.d && \
   echo "researcher ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/researcher-firewall && \
   chmod 0440 /etc/sudoers.d/researcher-firewall
+
+# Copy SSH entrypoint (starts sshd with injected public key, then execs CMD)
+COPY entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
 USER researcher

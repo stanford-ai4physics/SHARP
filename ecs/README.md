@@ -166,6 +166,8 @@ Make sure you have run `source ./ecs/setup-ecs.sh` in your current shell first (
 
 A "task" is a running instance of the container on the EC2 instance.
 
+**Without SSH** (connect via ECS exec only):
+
 ```bash
 aws ecs run-task \
     --cluster my-agent-test-cluster \
@@ -173,6 +175,27 @@ aws ecs run-task \
     --task-definition agent-container \
     --enable-execute-command
 ```
+
+**With SSH** — pass your public key via `--overrides` to enable SSH access:
+
+```bash
+aws ecs run-task \
+    --cluster my-agent-test-cluster \
+    --launch-type EC2 \
+    --task-definition agent-container \
+    --enable-execute-command \
+    --overrides "{
+      \"containerOverrides\": [{
+        \"name\": \"researcher\",
+        \"environment\": [{
+          \"name\": \"SSH_PUBKEY\",
+          \"value\": \"$(cat ~/.ssh/id_rsa.pub)\"
+        }]
+      }]
+    }"
+```
+
+This injects your public key into the container at startup. Only key-based authentication is allowed (password authentication is disabled).
 
 ### Connect to the container
 
@@ -184,15 +207,30 @@ List running tasks — copy the task ID (the long string after the last `/`):
 aws ecs list-tasks --cluster my-agent-test-cluster
 ```
 
-Open a shell in the container:
+**Via ECS exec** (always available):
 
 ```bash
-aws ecs execute-command \
-    --cluster my-agent-test-cluster \
+aws ecs execute-command \ --cluster my-agent-test-cluster \
     --task <TASK_ID> \
     --container researcher \
     --interactive \
     --command "/bin/bash"
+```
+
+**Via SSH** (if launched with `SSH_PUBKEY`):
+
+Get the public IP of the EC2 instance:
+
+```bash
+aws ec2 describe-instances \
+    --instance-ids $INSTANCE_ID \
+    --query "Reservations[0].Instances[0].PublicIpAddress" --output text
+```
+
+Connect:
+
+```bash
+ssh -p 2222 researcher@<PUBLIC_IP>
 ```
 
 ### Stop a task

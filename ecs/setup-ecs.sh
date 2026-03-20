@@ -87,6 +87,23 @@ echo "SUBNET_ID=${SUBNET_ID}"
             --vpc-id "$VPC_ID" > /dev/null
     fi
 
+    # --- SSH ingress rule (port 2222) ---
+    SG_ID_LOCAL=$(aws ec2 describe-security-groups \
+        --filters "Name=group-name,Values=$SG_NAME" \
+        --query "SecurityGroups[0].GroupId" --output text)
+    if aws ec2 describe-security-groups --group-ids "$SG_ID_LOCAL" \
+        --query "SecurityGroups[0].IpPermissions[?FromPort==\`2222\` && ToPort==\`2222\`]" \
+        --output text | grep -q "2222"; then
+        echo "SSH ingress rule already exists, skipping."
+    else
+        echo "Adding SSH ingress rule (port 2222) to $SG_NAME..."
+        aws ec2 authorize-security-group-ingress \
+            --group-id "$SG_ID_LOCAL" \
+            --protocol tcp \
+            --port 2222 \
+            --cidr 0.0.0.0/0
+    fi
+
     # --- CloudWatch log group ---
     LOG_GROUP="/ecs/agent-container"
     if aws logs describe-log-groups --log-group-name-prefix "$LOG_GROUP" \

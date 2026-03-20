@@ -8,9 +8,23 @@ containerDefinitions:
   - name: researcher
     image: ${AWS_ACCOUNT_ID}.dkr.ecr.eu-central-1.amazonaws.com/agent-image:latest
     essential: true
-    command: ["/bin/sh", "-c", "echo 'container initialized' && tail -f /dev/null"]
+    command:
+      - "/usr/local/bin/entrypoint.sh"
+      - "/bin/sh"
+      - "-c"
+      - "echo 'container initialized' && tail -f /dev/null"
     cpu: 1024 # 1 vCPU (t3.small)
     memory: 1792 # 1.75 GB (leaving 256 MB for ECS agent + OS)
+    portMappings:
+      - containerPort: 22
+        hostPort: 2222
+        protocol: tcp
+    # --- SSH access ---
+    # Set SSH_PUBKEY when running the task (via --overrides) to enable SSH.
+    # See README.md for details.
+    environment:
+      - name: SSH_PUBKEY
+        value: ""
     # --- GPU support ---
     # To enable GPU, uncomment the block below and use a GPU instance
     # (e.g., g4dn.xlarge). Also adjust cpu/memory to match the instance.
