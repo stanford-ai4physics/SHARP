@@ -6,7 +6,7 @@ executionRoleArn: arn:aws:iam::${AWS_ACCOUNT_ID}:role/ECSTaskExecutionRole
 taskRoleArn: arn:aws:iam::${AWS_ACCOUNT_ID}:role/ECSTaskRole
 containerDefinitions:
   - name: researcher
-    image: ${AWS_ACCOUNT_ID}.dkr.ecr.eu-central-1.amazonaws.com/agent-image:latest
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.us-west-1.amazonaws.com/agent-image:latest
     essential: true
     command:
       - "/usr/local/bin/entrypoint.sh"
@@ -36,7 +36,7 @@ containerDefinitions:
       logDriver: awslogs
       options:
         awslogs-group: /ecs/agent-container
-        awslogs-region: eu-central-1
+        awslogs-region: us-west-1
         awslogs-stream-prefix: researcher
     linuxParameters:
       initProcessEnabled: true

@@ -20,17 +20,32 @@ The deployment involves:
 3. You run ECS tasks on that instance (same `run-task` / `stop-task` CLI workflow)
 4. When done, you stop or terminate the instance to stop billing
 
-## Prerequisites
+---
+
+## Initial Setup (first time only)
+
+### Prerequisites
 
 - **AWS CLI** — `brew install awscli` on macOS
-
 - **Docker** installed
-
 - **Session Manager plugin** (needed to open a shell in the container) — `brew install session-manager-plugin` on macOS
-
 - **jq** — `brew install jq` on macOS (used by the setup script to parse the AMI ID)
 
-### AWS authentication
+#### SSH key
+
+Generate a dedicated SSH key for this project (first time only):
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/id_rsa_aws_agent_project -C "ecs-agent-project" -N ""
+```
+
+This creates `~/.ssh/id_rsa_aws_agent_project` (private) and `~/.ssh/id_rsa_aws_agent_project.pub` (public). The public key is automatically injected into the container at launch. To connect, use:
+
+```bash
+ssh -p 2222 -i ~/.ssh/id_rsa_aws_agent_project researcher@<PUBLIC_IP>
+```
+
+#### AWS authentication
 
 First, set your default region (you can skip the access key prompts by pressing Enter):
 
@@ -41,7 +56,7 @@ aws configure
 ```text
 AWS Access Key ID [None]:
 AWS Secret Access Key [None]:
-Default region name [None]: eu-central-1
+Default region name [None]: us-west-1
 Default output format [None]:
 ```
 
@@ -51,10 +66,6 @@ Then log in via the browser:
 aws login
 ```
 
-This will open a browser window where you can authenticate with your AWS account (IAM or root user).
-
-## Setup
-
 ### 1. Run the setup script
 
 This detects your AWS account ID and subnet, creates the required IAM roles (for ECS tasks and the EC2 instance), an instance profile, a security group, and the logging setup. It also looks up the ECS-optimized AMI. Use `source` so the exports are available in your current shell:
@@ -63,7 +74,7 @@ This detects your AWS account ID and subnet, creates the required IAM roles (for
 source ./ecs/setup-ecs.sh
 ```
 
-### 2. Create an ECR repository (first time only)
+### 2. Create an ECR repository
 
 This creates a container registry where your Docker image will be stored.
 
@@ -71,14 +82,31 @@ This creates a container registry where your Docker image will be stored.
 aws ecr create-repository --repository-name agent-image
 ```
 
-### 3. Build and push the Docker image
+### 3. Create an ECS cluster
+
+A cluster is a logical grouping of tasks (running containers).
+
+```bash
+aws ecs create-cluster --cluster-name my-agent-test-cluster
+```
+
+### 4. Build, push, and register
+
+Build the Docker image, push it to ECR, and register the task definition:
+
+```bash
+source ./ecs/deploy-ecs.sh
+```
+
+<details>
+<summary>Manual steps (if you prefer not to use the script)</summary>
 
 Authenticate Docker with ECR:
 
 ```bash
-aws ecr get-login-password --region eu-central-1 \
+aws ecr get-login-password --region us-west-1 \
     | docker login --username AWS --password-stdin \
-    ${AWS_ACCOUNT_ID}.dkr.ecr.eu-central-1.amazonaws.com
+    ${AWS_ACCOUNT_ID}.dkr.ecr.us-west-1.amazonaws.com
 ```
 
 Build the image:
@@ -91,37 +119,56 @@ Tag and push to ECR:
 
 ```bash
 docker tag agent-image:latest \
-    ${AWS_ACCOUNT_ID}.dkr.ecr.eu-central-1.amazonaws.com/agent-image:latest
+    ${AWS_ACCOUNT_ID}.dkr.ecr.us-west-1.amazonaws.com/agent-image:latest
 ```
 
 ```bash
 docker push \
-    ${AWS_ACCOUNT_ID}.dkr.ecr.eu-central-1.amazonaws.com/agent-image:latest
+    ${AWS_ACCOUNT_ID}.dkr.ecr.us-west-1.amazonaws.com/agent-image:latest
 ```
 
-### 4. Create an ECS cluster (first time only)
-
-A cluster is a logical grouping of tasks (running containers).
-
-```bash
-aws ecs create-cluster --cluster-name my-agent-test-cluster
-```
-
-### 5. Register the task definition
-
-The task definition (`agent-container.yaml`) tells ECS which image to run and how much CPU/memory to allocate. Since it contains `${AWS_ACCOUNT_ID}` placeholders, we use `envsubst` to fill them in before registering:
+Register the task definition (`agent-container.yaml` contains `${AWS_ACCOUNT_ID}` placeholders, so we use `envsubst` to fill them in):
 
 ```bash
 envsubst < ecs/agent-container.yaml > /tmp/agent-container.yaml
-```
-
-```bash
 aws ecs register-task-definition --cli-input-yaml file:///tmp/agent-container.yaml
 ```
 
-### 6. Launch the EC2 instance
+</details>
 
-Launch the instance. The `--user-data` script tells the ECS agent which cluster to join. The `$AMI_ID` variable (an ECS-optimized AMI — a pre-built OS image for EC2) was set by the setup script in step 1:
+---
+
+## Daily Usage
+
+### Quick start / stop
+
+Three helper scripts handle common workflows. All must be **sourced** (not executed) so that environment variables like `INSTANCE_ID` and `TASK_ID` are available in your shell.
+
+| Script | What it does |
+|---|---|
+| `source ./ecs/start-ecs.sh` | Load env, register task def, launch/restart EC2 instance, run task with SSH |
+| `source ./ecs/start-ecs.sh --no-ssh` | Same as above, but without SSH (connect via ECS exec only) |
+| `source ./ecs/stop-ecs.sh` | Stop all tasks and stop the EC2 instance (preserves it for restart) |
+| `source ./ecs/stop-ecs.sh --terminate` | Stop all tasks and permanently delete the EC2 instance |
+| `source ./ecs/deploy-ecs.sh` | Build image, push to ECR, register task definition |
+
+Example session:
+
+```bash
+# Start everything (SSH enabled by default)
+source ./ecs/start-ecs.sh
+
+# ... work ...
+
+# Shut down when done
+source ./ecs/stop-ecs.sh
+```
+
+### Start (manual)
+
+Make sure you have run `source ./ecs/setup-ecs.sh` in your current shell first.
+
+#### Launch the EC2 instance
 
 ```bash
 INSTANCE_ID=$(aws ec2 run-instances \
@@ -144,27 +191,9 @@ Wait 1–2 minutes for the instance to boot and register with ECS, then verify:
 aws ecs list-container-instances --cluster my-agent-test-cluster
 ```
 
-You should see one container instance ARN.
-
 > **Note**: If `run-instances` fails with "invalid instance profile", wait 10 seconds and retry — newly created instance profiles can take a moment to propagate.
 
-## Logging
-
-Container stdout/stderr is shipped to **CloudWatch Logs** via the `awslogs` log driver configured in the task definition. The log group `/ecs/agent-container` is created automatically by the setup script.
-
-View logs in the AWS Console under **CloudWatch → Log groups → /ecs/agent-container**, or from the CLI:
-
-```bash
-aws logs tail /ecs/agent-container --follow
-```
-
-## Running
-
-Make sure you have run `source ./ecs/setup-ecs.sh` in your current shell first (step 1), and that your EC2 instance is running (step 6).
-
-### Start a task
-
-A "task" is a running instance of the container on the EC2 instance.
+#### Start a task
 
 **Without SSH** (connect via ECS exec only):
 
@@ -189,7 +218,7 @@ aws ecs run-task \
         \"name\": \"researcher\",
         \"environment\": [{
           \"name\": \"SSH_PUBKEY\",
-          \"value\": \"$(cat ~/.ssh/id_rsa.pub)\"
+          \"value\": \"$(cat ~/.ssh/id_rsa_aws_agent_project.pub)\"
         }]
       }]
     }"
@@ -210,7 +239,8 @@ aws ecs list-tasks --cluster my-agent-test-cluster
 **Via ECS exec** (always available):
 
 ```bash
-aws ecs execute-command \ --cluster my-agent-test-cluster \
+aws ecs execute-command \
+    --cluster my-agent-test-cluster \
     --task <TASK_ID> \
     --container researcher \
     --interactive \
@@ -230,27 +260,18 @@ aws ec2 describe-instances \
 Connect:
 
 ```bash
-ssh -p 2222 researcher@<PUBLIC_IP>
+ssh -p 2222 -i ~/.ssh/id_rsa_aws_agent_project researcher@<PUBLIC_IP>
 ```
 
-### Stop a task
+### Stop (manual)
+
+#### Stop a task
 
 ```bash
 aws ecs stop-task --cluster my-agent-test-cluster --task <TASK_ID>
 ```
 
-### List EC2 instances
-
-If you lost track of the instance ID, list all running/stopped instances:
-
-```bash
-aws ec2 describe-instances \
-    --filters "Name=instance-state-name,Values=running,stopped" \
-    --query "Reservations[].Instances[].{ID:InstanceId,Type:InstanceType,State:State.Name,Name:Tags[?Key=='Name']|[0].Value}" \
-    --output table
-```
-
-### Stop the EC2 instance (when done working)
+#### Stop the EC2 instance
 
 **Important**: You are billed while the instance is running. Stop it when you are not using it.
 
@@ -274,17 +295,43 @@ aws ec2 terminate-instances --instance-ids $INSTANCE_ID
 
 > **Note**: When you stop and restart the instance, it automatically re-registers with the ECS cluster. Wait 1–2 minutes before running new tasks.
 
+### Useful commands
+
+#### List EC2 instances
+
+```bash
+aws ec2 describe-instances \
+    --filters "Name=instance-state-name,Values=running,stopped" \
+    --query "Reservations[].Instances[].{ID:InstanceId,Type:InstanceType,State:State.Name,Name:Tags[?Key=='Name']|[0].Value}" \
+    --output table
+```
+
+#### View logs
+
+Container stdout/stderr is shipped to **CloudWatch Logs** via the `awslogs` log driver configured in the task definition. The log group `/ecs/agent-container` is created automatically by the setup script.
+
+```bash
+aws logs tail /ecs/agent-container --follow
+```
+
+---
+
 ## Updating
 
-After modifying `agent-container.yaml`, re-register the task definition:
+After modifying the Docker image or `agent-container.yaml`, rebuild and re-register:
+
+```bash
+source ./ecs/deploy-ecs.sh
+```
+
+Or manually:
 
 ```bash
 envsubst < ecs/agent-container.yaml > /tmp/agent-container.yaml
-```
-
-```bash
 aws ecs register-task-definition --cli-input-yaml file:///tmp/agent-container.yaml
 ```
+
+---
 
 ## Enabling GPU Support
 
