@@ -56,7 +56,7 @@ else
         --iam-instance-profile Name=ecsInstanceProfile \
         --associate-public-ip-address \
         --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=ecs-worker}]' \
-        --user-data "$(printf '#!/bin/bash\necho ECS_CLUSTER=my-agent-test-cluster >> /etc/ecs/ecs.config')" \
+        --user-data "$(printf '#!/bin/bash\necho ECS_CLUSTER=agent-cluster >> /etc/ecs/ecs.config')" \
         --query "Instances[0].InstanceId" --output text)
 fi
 echo "INSTANCE_ID=${INSTANCE_ID}"
@@ -65,7 +65,7 @@ echo "INSTANCE_ID=${INSTANCE_ID}"
 echo "==> Waiting for instance to register with ECS cluster..."
 _i=0
 while [ $_i -lt 30 ]; do
-    _COUNT=$(aws ecs list-container-instances --cluster my-agent-test-cluster \
+    _COUNT=$(aws ecs list-container-instances --cluster agent-cluster \
         --query "length(containerInstanceArns)" --output text 2>/dev/null || true)
     if [ "$_COUNT" != "0" ] && [ "$_COUNT" != "None" ] && [ -n "$_COUNT" ]; then
         echo "Instance registered."
@@ -125,14 +125,14 @@ while [ "$_TASK_ARN" = "None" ] && [ $_attempt -lt 10 ]; do
 
     if [ -n "$_OVERRIDES_FLAG" ]; then
         _RUN_RESULT=$(aws ecs run-task \
-            --cluster my-agent-test-cluster \
+            --cluster agent-cluster \
             --launch-type EC2 \
             --task-definition agent-container \
             --enable-execute-command \
             --overrides "{\"containerOverrides\":[{\"name\":\"researcher\",\"environment\":[${_ENV_OVERRIDES}]}]}" 2>&1) || true
     else
         _RUN_RESULT=$(aws ecs run-task \
-            --cluster my-agent-test-cluster \
+            --cluster agent-cluster \
             --launch-type EC2 \
             --task-definition agent-container \
             --enable-execute-command 2>&1) || true
@@ -166,7 +166,7 @@ echo ""
 echo "==> Waiting for task to reach RUNNING state..."
 _task_running=false
 for _w in $(seq 1 12); do
-    _STATUS=$(aws ecs describe-tasks --cluster my-agent-test-cluster --tasks "$TASK_ID" \
+    _STATUS=$(aws ecs describe-tasks --cluster agent-cluster --tasks "$TASK_ID" \
         --query "tasks[0].lastStatus" --output text 2>/dev/null || true)
     if [ "$_STATUS" = "RUNNING" ]; then
         _task_running=true
@@ -199,7 +199,7 @@ if [ "$_SSH_ENABLED" = true ] && [ "$PUBLIC_IP" != "None" ] && [ -n "$PUBLIC_IP"
     echo "  SSH:       ssh -p 2222 -i ~/.ssh/id_rsa_aws_agent_project researcher@${PUBLIC_IP}"
 fi
 echo "  ECS exec:  aws ecs execute-command \\"
-echo "               --cluster my-agent-test-cluster \\"
+echo "               --cluster agent-cluster \\"
 echo "               --task ${TASK_ID} \\"
 echo "               --container researcher \\"
 echo "               --interactive --command /bin/bash"

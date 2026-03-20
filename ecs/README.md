@@ -117,7 +117,7 @@ aws ecr create-repository --repository-name agent-image
 A cluster is a logical grouping of tasks (running containers).
 
 ```bash
-aws ecs create-cluster --cluster-name my-agent-test-cluster
+aws ecs create-cluster --cluster-name agent-cluster
 ```
 
 ### 4. Build, push, and register
@@ -212,7 +212,7 @@ INSTANCE_ID=$(aws ec2 run-instances \
     --iam-instance-profile Name=ecsInstanceProfile \
     --associate-public-ip-address \
     --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=ecs-worker}]' \
-    --user-data "$(printf '#!/bin/bash\necho ECS_CLUSTER=my-agent-test-cluster >> /etc/ecs/ecs.config')" \
+    --user-data "$(printf '#!/bin/bash\necho ECS_CLUSTER=agent-cluster >> /etc/ecs/ecs.config')" \
     --query "Instances[0].InstanceId" --output text)
 echo "INSTANCE_ID=${INSTANCE_ID}"
 ```
@@ -220,7 +220,7 @@ echo "INSTANCE_ID=${INSTANCE_ID}"
 Wait 1–2 minutes for the instance to boot and register with ECS, then verify:
 
 ```bash
-aws ecs list-container-instances --cluster my-agent-test-cluster
+aws ecs list-container-instances --cluster agent-cluster
 ```
 
 > **Note**: If `run-instances` fails with "invalid instance profile", wait 10 seconds and retry — newly created instance profiles can take a moment to propagate.
@@ -231,7 +231,7 @@ aws ecs list-container-instances --cluster my-agent-test-cluster
 
 ```bash
 aws ecs run-task \
-    --cluster my-agent-test-cluster \
+    --cluster agent-cluster \
     --launch-type EC2 \
     --task-definition agent-container \
     --enable-execute-command
@@ -241,7 +241,7 @@ aws ecs run-task \
 
 ```bash
 aws ecs run-task \
-    --cluster my-agent-test-cluster \
+    --cluster agent-cluster \
     --launch-type EC2 \
     --task-definition agent-container \
     --enable-execute-command \
@@ -265,14 +265,14 @@ Wait ~30 seconds for the task to reach RUNNING state.
 List running tasks — copy the task ID (the long string after the last `/`):
 
 ```bash
-aws ecs list-tasks --cluster my-agent-test-cluster
+aws ecs list-tasks --cluster agent-cluster
 ```
 
 **Via ECS exec** (always available):
 
 ```bash
 aws ecs execute-command \
-    --cluster my-agent-test-cluster \
+    --cluster agent-cluster \
     --task <TASK_ID> \
     --container researcher \
     --interactive \
@@ -300,7 +300,7 @@ ssh -p 2222 -i ~/.ssh/id_rsa_aws_agent_project researcher@<PUBLIC_IP>
 #### Stop a task
 
 ```bash
-aws ecs stop-task --cluster my-agent-test-cluster --task <TASK_ID>
+aws ecs stop-task --cluster agent-cluster --task <TASK_ID>
 ```
 
 #### Stop the EC2 instance
@@ -410,7 +410,7 @@ INSTANCE_ID=$(aws ec2 run-instances \
     --iam-instance-profile Name=ecsInstanceProfile \
     --associate-public-ip-address \
     --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=ecs-gpu-worker}]' \
-    --user-data "$(printf '#!/bin/bash\necho ECS_CLUSTER=my-agent-test-cluster >> /etc/ecs/ecs.config\necho ECS_ENABLE_GPU_SUPPORT=true >> /etc/ecs/ecs.config')" \
+    --user-data "$(printf '#!/bin/bash\necho ECS_CLUSTER=agent-cluster >> /etc/ecs/ecs.config\necho ECS_ENABLE_GPU_SUPPORT=true >> /etc/ecs/ecs.config')" \
     --query "Instances[0].InstanceId" --output text)
 ```
 

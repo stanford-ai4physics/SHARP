@@ -15,7 +15,7 @@ for arg in "$@"; do
     esac
 done
 
-_CLUSTER="my-agent-test-cluster"
+_CLUSTER="agent-cluster"
 
 # --- 1. Stop all tasks (RUNNING and PENDING) ---
 echo "==> Stopping all tasks..."
