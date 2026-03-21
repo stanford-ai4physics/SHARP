@@ -21,12 +21,6 @@ done
 
 # --- 1. Load environment variables ---
 echo "==> Loading environment..."
-if [ -f "${_START_SCRIPT_DIR}/.env" ]; then
-    echo "Loading ecs/.env..."
-    set -a
-    . "${_START_SCRIPT_DIR}/.env"
-    set +a
-fi
 source "${_START_SCRIPT_DIR}/setup-ecs.sh"
 
 # --- 2. Register task definition (always re-register to pick up changes) ---
@@ -93,21 +87,6 @@ if [ "$_SSH_ENABLED" = true ]; then
     _PUBKEY=$(cat ~/.ssh/id_rsa_aws_agent_project.pub)
     _ENV_OVERRIDES="{\"name\":\"SSH_PUBKEY\",\"value\":\"${_PUBKEY}\"}"
 fi
-if [ -n "${GH_TOKEN:-}" ]; then
-    if [ -n "$_ENV_OVERRIDES" ]; then
-        _ENV_OVERRIDES="${_ENV_OVERRIDES},"
-    fi
-    _ENV_OVERRIDES="${_ENV_OVERRIDES}{\"name\":\"GH_TOKEN\",\"value\":\"${GH_TOKEN}\"}"
-else
-    echo "WARNING: GH_TOKEN not set — repo will not be cloned in the container."
-fi
-if [ -n "${GH_REPO:-}" ]; then
-    if [ -n "$_ENV_OVERRIDES" ]; then
-        _ENV_OVERRIDES="${_ENV_OVERRIDES},"
-    fi
-    _ENV_OVERRIDES="${_ENV_OVERRIDES}{\"name\":\"GH_REPO\",\"value\":\"${GH_REPO}\"}"
-fi
-
 # Build the --overrides flag if we have any env vars to pass
 _OVERRIDES_FLAG=""
 if [ -n "$_ENV_OVERRIDES" ]; then

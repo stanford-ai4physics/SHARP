@@ -45,36 +45,6 @@ This creates `~/.ssh/id_rsa_aws_agent_project` (private) and `~/.ssh/id_rsa_aws_
 ssh -p 2222 -i ~/.ssh/id_rsa_aws_agent_project researcher@<PUBLIC_IP>
 ```
 
-#### Environment file (`ecs/.env`)
-
-The container can clone our GitHub repository at startup. Configuration is stored in a local `ecs/.env` file (git-ignored, never committed).
-
-Copy the example and fill in your values:
-
-```bash
-cp ecs/.env.example ecs/.env
-```
-
-Edit `ecs/.env`:
-
-```bash
-# GitHub Personal Access Token (fine-grained, scoped to your repo)
-GH_TOKEN=github_pat_...
-
-# GitHub repository to clone into the container (owner/repo)
-# Has to be owned by the same user as the token
-GH_REPO=YourUser/agent_template
-```
-
-**Creating a GitHub token** (first time only):
-
-1. Go to [GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens](https://github.com/settings/personal-access-tokens/new)
-2. Set a name (e.g., `ecs-agent-project`), expiration, and scope it to your repository
-3. Grant **Contents: Read and write** permission (for clone/push/pull)
-4. Copy the token into `ecs/.env`
-
-The `start-ecs.sh` script automatically sources `ecs/.env` and passes both variables to the container.
-
 #### AWS authentication
 
 Then log in via the browser:
@@ -139,10 +109,10 @@ aws ecr get-login-password --region us-west-1 \
     ${AWS_ACCOUNT_ID}.dkr.ecr.us-west-1.amazonaws.com
 ```
 
-Build the image:
+Build the image (from the repo root — the entire repo is copied into the image):
 
 ```bash
-docker buildx build --platform linux/amd64 -t agent-image ./.devcontainer
+docker buildx build --platform linux/amd64 -f ./.devcontainer/Dockerfile -t agent-image .
 ```
 
 Tag and push to ECR:
@@ -185,8 +155,6 @@ Three helper scripts handle common workflows. All must be **sourced** (not execu
 Example session:
 
 ```bash
-# Make sure ecs/.env exists (see "Environment file" above)
-
 # Start everything (SSH enabled by default)
 source ./ecs/start-ecs.sh
 

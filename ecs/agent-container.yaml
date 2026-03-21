@@ -25,10 +25,6 @@ containerDefinitions:
     environment:
       - name: SSH_PUBKEY
         value: ""
-      - name: GH_TOKEN
-        value: ""
-      - name: GH_REPO
-        value: ""
     # --- GPU support ---
     # To enable GPU, uncomment the block below and use a GPU instance
     # (e.g., g4dn.xlarge). Also adjust cpu/memory to match the instance.

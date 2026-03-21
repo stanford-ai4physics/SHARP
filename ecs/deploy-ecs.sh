@@ -27,9 +27,11 @@ fi
     aws ecr get-login-password --region "$REGION" \
         | docker login --username AWS --password-stdin "$REPO"
 
-    # --- 3. Build the image ---
+    # --- 3. Build the image (repo is copied from build context) ---
     echo "==> Building Docker image..."
-    docker buildx build --platform linux/amd64 -t agent-image ./.devcontainer
+    docker buildx build --platform linux/amd64 \
+        -f ./.devcontainer/Dockerfile \
+        -t agent-image .
 
     # --- 4. Tag and push ---
     echo "==> Pushing image to ECR..."

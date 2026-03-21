@@ -108,7 +108,7 @@ ENV PATH="/home/researcher/.local/bin:$PATH"
 RUN curl -fsSL https://claude.ai/install.sh | bash
 
 # Copy and set up firewall script
-COPY init-firewall.sh /usr/local/bin/
+COPY .devcontainer/init-firewall.sh /usr/local/bin/
 USER root
 RUN chmod +x /usr/local/bin/init-firewall.sh && \
   mkdir -p /etc/sudoers.d && \
@@ -116,7 +116,10 @@ RUN chmod +x /usr/local/bin/init-firewall.sh && \
   chmod 0440 /etc/sudoers.d/researcher-firewall
 
 # Copy SSH entrypoint (starts sshd with injected public key, then execs CMD)
-COPY entrypoint.sh /usr/local/bin/
+COPY .devcontainer/entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 USER researcher
+
+# Copy the project repo into the image (build context is the repo root)
+COPY --chown=researcher:researcher . /workspace

@@ -61,6 +61,3 @@ Thumbs.db
 
 # Config
 .config
-
-# ECS local environment (contains tokens)
-ecs/.env
