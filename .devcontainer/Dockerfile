@@ -101,11 +101,14 @@ RUN { \
 ENV PATH="/home/researcher/.local/bin:$PATH"
 RUN curl -fsSL https://claude.ai/install.sh | bash
 
-# Copy and set up firewall script
-COPY init-firewall.sh /usr/local/bin/
+# Copy and set up firewall script and entrypoint
+COPY init-firewall.sh entrypoint.sh /usr/local/bin/
 USER root
-RUN chmod +x /usr/local/bin/init-firewall.sh && \
+RUN chmod +x /usr/local/bin/init-firewall.sh /usr/local/bin/entrypoint.sh && \
   mkdir -p /etc/sudoers.d && \
   echo "researcher ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/researcher-firewall && \
   chmod 0440 /etc/sudoers.d/researcher-firewall
 USER researcher
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["/bin/bash"]
