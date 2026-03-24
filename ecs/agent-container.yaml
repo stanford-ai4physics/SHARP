@@ -13,8 +13,8 @@ containerDefinitions:
       - "/bin/sh"
       - "-c"
       - "echo 'container initialized' && tail -f /dev/null"
-    cpu: 1024 # 1 vCPU (t3.small)
-    memory: 1792 # 1.75 GB (leaving 256 MB for ECS agent + OS)
+    cpu: 2048 # 2 vCPUs (t3.small)
+    memory: 1800 # ~2 GB (t3.small, minus ECS agent overhead)
     portMappings:
       - containerPort: 22
         hostPort: 2222
