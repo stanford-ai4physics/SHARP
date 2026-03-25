@@ -6,7 +6,7 @@ milestone, then stop. The human communicates with you between iterations.
 
 ## Your Task Each Iteration
 
-1. Read `project.json` (same directory as this file) to understand the analysis, its milestones, and any `instructions` that scope the work
+1. Read `project.json` (same directory as this file) to understand the analysis and its milestones
 2. Read `progress.txt` to understand what has been done and what was learned
 3. Check you are on the correct branch from `project.json` `branchName`. If not, check it out or create from main.
 4. Identify the current situation — one of three cases:
@@ -139,8 +139,8 @@ The next iteration proceeds to the next milestone.
 ```
 
 The milestone stays `passes: true`. On the next iteration, the Overwatcher detects
-the feedback, applies the requested changes, re-runs the verification gate, removes
-the `feedback` field, and re-enters the checkpoint (signals `NEEDS_REVIEW` again).
+the feedback, applies the requested changes, removes the `feedback` field, and
+re-enters the checkpoint (signals `NEEDS_REVIEW` again).
 
 **Option 3 — Full rejection:** Set `"passes": false` in `project.json`.
 The Overwatcher redoes the milestone from scratch in the next iteration.
@@ -151,9 +151,9 @@ When handling Case A, after confirming a checkpoint is awaiting approval, also c
 for a `"feedback"` field on the milestone:
 
 - **No feedback field** → signal `NEEDS_REVIEW` as usual (first time reaching checkpoint)
-- **Has feedback array** → apply each feedback item, re-run verification gate, commit,
-  remove the `feedback` field from `project.json`, append a revision entry to
-  `progress.txt`, then signal `NEEDS_REVIEW` again for re-review
+- **Has feedback array** → apply each feedback item, commit, remove the
+`feedback` field from `project.json`, append a revision entry to `progress.txt`,
+then signal `NEEDS_REVIEW` again for re-review
 
 ## README.md Maintenance
 
@@ -204,11 +204,6 @@ pytest tests/ -v
   "paper": "arXiv:XXXX.XXXXX",
   "title": "Short analysis title",
   "branchName": "reimplementation/paper-name",
-  "instructions": [
-    "Only reproduce Table II (top tagging performance)",
-    "Use ParticleNet-Lite architecture only",
-    "Skip quark/gluon discrimination"
-  ],
   "milestones": [
     {
       "id": "M-001",
@@ -222,35 +217,15 @@ pytest tests/ -v
 }
 ```
 
-### `instructions` field
-
-The `instructions` array is **optional but recommended**. Use it to scope the analysis
-before any milestones are generated. Each entry is a discrete constraint that the
-Overwatcher and all subagents must respect. Examples:
-
-- Limit which results/tables/figures to reproduce
-- Specify a simplified or "lite" variant of the method
-- Exclude parts of the paper
-- Set resource constraints (e.g. "train for max 10 epochs for validation")
-
-When generating milestones (via `/setup` or interactively), the Overwatcher reads
-`instructions` first and tailors the milestone plan accordingly. Instructions are
-also re-read at each iteration to ensure scope is respected throughout.
-
-## Stop Signals — CRITICAL
-
-You MUST end your response with one of these **exact verbatim strings** when applicable.
-Do NOT paraphrase, reformat, or wrap them in markdown. Copy them character-for-character.
+## Stop Conditions
 
 If ALL milestones pass and all checkpoints are approved, end your response with exactly:
 <promise>COMPLETE</promise>
 
-If a checkpoint milestone passes but is not yet approved by the human, end your response with exactly:
+If a checkpoint milestone passes but is not yet approved by the human:
 <promise>NEEDS_REVIEW</promise>
 
 Otherwise end your response normally — the next iteration will continue.
-
-These signal strings are parsed by the outer loop. If you do not output them exactly, the loop will not stop.
 
 ## Important
 
