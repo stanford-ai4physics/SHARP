@@ -219,7 +219,7 @@ pytest tests/ -v
 
 ## Stop Conditions
 
-If ALL milestones pass and all checkpoints are approved, end your response with exactly:
+If ALL milestones pass and all checkpoints are approved:
 <promise>COMPLETE</promise>
 
 If a checkpoint milestone passes but is not yet approved by the human:
