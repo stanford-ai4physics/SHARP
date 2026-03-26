@@ -2,9 +2,11 @@
   "name": "Claude Code Sandbox",
   "build": {
     "dockerfile": "Dockerfile",
-    "context": ".."
+    "context": "..",
+    "options": ["--platform=linux/amd64"]
   },
   "runArgs": [
+    "--platform=linux/amd64",
     "--cap-add=NET_ADMIN",
     "--cap-add=NET_RAW"
   ],
@@ -32,9 +34,11 @@
       }
     }
   },
+  "initializeCommand": "docker pull --platform linux/amd64 docker.io/nollde24/claude-nersc:latest",
   "remoteUser": "researcher",
   "containerEnv": {
-    "NODE_OPTIONS": "--max-old-space-size=4096"
+    "NODE_OPTIONS": "--max-old-space-size=4096",
+    "CLAUDE_CONFIG_DIR": "/home/researcher/.claude"
   },
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
   "workspaceFolder": "/workspace",
