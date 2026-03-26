@@ -36,7 +36,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: .devcontainer/Dockerfile
+          file: Dockerfile
           platforms: linux/amd64,linux/arm64
           push: false
 
@@ -45,7 +45,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: .devcontainer/Dockerfile
+          file: Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ env.IMAGE_NAME }}:latest
@@ -73,7 +73,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: .devcontainer/Dockerfile
+          file: Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ env.IMAGE_NAME }}:${{ github.ref_name }}
