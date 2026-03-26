@@ -10,6 +10,8 @@ This means you have to clone the repository, copy the `claude-nersc` script to `
 
 You want to update the agent image such that the additional software from this repo is included.
 
+*That is for now a private image* so you'll have to login with `docker login` and use the credentials (a read-only access token) provided by the image owner.
+
 ```shell
 claude-nersc -A m3246 -t 1:00:00 -g 1 -w <your_directory> --agent-image docker.io/jobirk/agent:latest
 ```
