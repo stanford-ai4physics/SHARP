@@ -3,7 +3,16 @@
 ## Usage
 
 ### Prepare and open docker container
-- see [here](https://github.com/Nollde/agent_template/tree/main/.devcontainer)
+
+Run the Docker container based on the setup in [Nollde/claude-nersc](https://github.com/Nollde/claude-nersc).
+
+This means you have to clone the repository, copy the `claude-nersc` script to `~/.local/bin/claude-nersc` and make it executable. Then you can run `claude-nersc` to start the container.
+
+You want to update the agent image such that the additional software from this repo is included.
+
+```shell
+claude-nersc -A m3246 -t 1:00:00 -g 1 -w <your_directory> --agent-image docker.io/jobirk/agent:latest
+```
 
 ### Example
 First we need to load the plan skill to create the PRD:
