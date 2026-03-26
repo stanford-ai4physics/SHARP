@@ -35,7 +35,8 @@ jobs:
         if: github.event_name == 'pull_request'
         uses: docker/build-push-action@v6
         with:
-          context: .devcontainer
+          context: .
+          file: .devcontainer/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: false
 
@@ -43,7 +44,8 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: docker/build-push-action@v6
         with:
-          context: .devcontainer
+          context: .
+          file: .devcontainer/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ env.IMAGE_NAME }}:latest
@@ -70,7 +72,8 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: .devcontainer
+          context: .
+          file: .devcontainer/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ env.IMAGE_NAME }}:${{ github.ref_name }}
