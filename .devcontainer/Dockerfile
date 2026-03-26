@@ -1,6 +1,6 @@
 # Base image: claude-nersc provides miniconda3, researcher user, system tools,
 # fzf, git-delta, Claude Code, firewall/entrypoint, and /workspace workdir.
-FROM --platform=linux/amd64 docker.io/nollde24/claude-nersc:latest
+FROM docker.io/nollde24/claude-nersc:latest
 
 USER root
 
