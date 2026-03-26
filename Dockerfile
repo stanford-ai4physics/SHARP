@@ -11,6 +11,9 @@ RUN conda env create --name template --file /tmp/environment.yml && \
     rm /tmp/environment.yml
 
 
+# Make claude binary accessible to non-root users
+RUN chmod -R o+rX /root /root/.local
+
 # Create workspace and config directories and set permissions
 RUN mkdir -p /workspace /home/$USERNAME/.claude && \
   chown -R $USERNAME:$USERNAME /workspace /home/$USERNAME/.claude
