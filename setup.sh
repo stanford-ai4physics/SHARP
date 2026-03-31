@@ -17,14 +17,20 @@ action() {
     fi
 
     # Create or update conda environment from environment.yml
-    if ! conda env list | grep -q '^template'; then
-        conda env create --name template --file="${this_dir}/environment.yml"
+    # Use a user-writable prefix so updates work even when the Docker image
+    # pre-installed the env as root under /opt/conda.
+    local env_prefix="${HOME}/.conda/envs/template"
+
+    if [ -d "${env_prefix}" ]; then
+        # Environment exists in user-writable location — update it
+        conda env update --prefix "${env_prefix}" --file="${this_dir}/environment.yml" --prune
     else
-        conda env update --name template --file="${this_dir}/environment.yml" --prune
+        # Create a fresh env in the user-writable location
+        conda env create --prefix "${env_prefix}" --file="${this_dir}/environment.yml"
     fi
 
     # Activate conda environment
-    conda activate template
+    conda activate "${env_prefix}"
 
     # Load/write config
     CONFIG_FILE="${this_dir}/.config"
