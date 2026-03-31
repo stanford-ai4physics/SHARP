@@ -36,6 +36,11 @@ follow instructions meticulously.
 - The main implementation language is **Python**
 - Running in a Docker container
 - Source `setup.sh` to set up the working environment (sets PYTHONPATH, LAW_HOME, etc.)
+- **Dependency management**: All Python dependencies MUST be listed in `environment.yml`.
+  When you install a new package, **always add it to `environment.yml` first**, then
+  run `source setup.sh` to install it. This ensures dependencies survive container
+  restarts. Never install packages with bare `pip install` or `conda install` without
+  updating `environment.yml`.
 
 ## Shared Coding Standards
 

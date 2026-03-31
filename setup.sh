@@ -16,9 +16,11 @@ action() {
         module load python
     fi
 
-    # If conda env "template" does not exist create it
+    # Create or update conda environment from environment.yml
     if ! conda env list | grep -q '^template'; then
-        conda env create --name template --file=environment.yml
+        conda env create --name template --file="${this_dir}/environment.yml"
+    else
+        conda env update --name template --file="${this_dir}/environment.yml" --prune
     fi
 
     # Activate conda environment
@@ -41,6 +43,12 @@ action() {
 
     # Prompt user for input if TEMPLATE_OUT is not set
     prompt_user() {
+        # In non-interactive shells (e.g. agent/CI), default without prompting
+        if [[ ! -t 0 ]]; then
+            export TEMPLATE_OUT="${this_dir}/out"
+            write_config
+            return
+        fi
         read -p "Enter output directory [./out]: " user_input
         user_input=${user_input:-${this_dir}/out}
         if [[ -n $user_input ]]; then
