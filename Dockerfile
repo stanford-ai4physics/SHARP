@@ -2,6 +2,8 @@
 # fzf, git-delta, Claude Code, firewall/entrypoint, and /workspace workdir.
 FROM docker.io/nollde24/claude-nersc:latest
 
+ENV USERNAME=researcher
+
 USER root
 
 # Make claude binary accessible to non-root users
