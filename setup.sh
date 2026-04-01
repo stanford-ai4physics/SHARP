@@ -16,13 +16,21 @@ action() {
         module load python
     fi
 
-    # If conda env "template" does not exist create it
-    if ! conda env list | grep -q '^template'; then
-        conda env create --name template --file=environment.yml
+    # Create or update conda environment from environment.yml
+    # Use a user-writable prefix so updates work even when the Docker image
+    # pre-installed the env as root under /opt/conda.
+    local env_prefix="${HOME}/.conda/envs/template"
+
+    if [ -d "${env_prefix}" ]; then
+        # Environment exists in user-writable location — update it
+        conda env update --prefix "${env_prefix}" --file="${this_dir}/environment.yml" --prune
+    else
+        # Create a fresh env in the user-writable location
+        conda env create --prefix "${env_prefix}" --file="${this_dir}/environment.yml"
     fi
 
     # Activate conda environment
-    conda activate template
+    conda activate "${env_prefix}"
 
     # Load/write config
     CONFIG_FILE="${this_dir}/.config"
@@ -54,7 +62,13 @@ action() {
 
     if [[ -z $TEMPLATE_OUT ]]; then
         echo "No output directory configured."
-        prompt_user
+        if [[ ! -t 0 ]]; then
+            # Non-interactive shell (agent/CI) — default without prompting
+            export TEMPLATE_OUT="${this_dir}/out"
+            write_config
+        else
+            prompt_user
+        fi
     fi
 
     # If output directory somewhere else, set symlink to it
