@@ -49,12 +49,6 @@ action() {
 
     # Prompt user for input if TEMPLATE_OUT is not set
     prompt_user() {
-        # In non-interactive shells (e.g. agent/CI), default without prompting
-        if [[ ! -t 0 ]]; then
-            export TEMPLATE_OUT="${this_dir}/out"
-            write_config
-            return
-        fi
         read -p "Enter output directory [./out]: " user_input
         user_input=${user_input:-${this_dir}/out}
         if [[ -n $user_input ]]; then
@@ -68,7 +62,13 @@ action() {
 
     if [[ -z $TEMPLATE_OUT ]]; then
         echo "No output directory configured."
-        prompt_user
+        if [[ ! -t 0 ]]; then
+            # Non-interactive shell (agent/CI) — default without prompting
+            export TEMPLATE_OUT="${this_dir}/out"
+            write_config
+        else
+            prompt_user
+        fi
     fi
 
     # If output directory somewhere else, set symlink to it
