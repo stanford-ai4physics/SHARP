@@ -60,8 +60,10 @@ array on the appropriate milestone in `project.json`.
 
 - Each revision item must be a **concrete, actionable instruction** that the
   Overwatcher can execute without ambiguity
-- Write revisions on the milestone that owns the relevant code — check which
-  milestone produced the files that need changing
+- **Only add `"revisions"` to milestones that have already been worked on**
+  (`passes: true`). For future milestones (`passes: false`), edit their
+  `description` or other fields directly in `project.json` instead — there is
+  no existing work to revise, and adding revisions would waste an extra iteration
 - If the milestone is at a checkpoint (`passes: true`, `checkpoint_approved: false`),
   add revisions directly — the Overwatcher will apply them on the next iteration
 - If the milestone already has `checkpoint_approved: true`, set it back to `false`
@@ -79,8 +81,7 @@ array on the appropriate milestone in `project.json`.
   "passes": true,
   "revisions": [
     "Rename knn() to k_nearest_neighbors() for clarity",
-    "Add a test that checks output is invariant to particle ordering",
-    "Use 999.0 constant as a named variable, not a magic number"
+    "Add a test that checks output is invariant to particle ordering"
   ]
 }
 ```

@@ -119,7 +119,7 @@ for i in $(seq 1 $MAX_ITERATIONS); do
     echo "  3. Re-run: ./researcher.sh --tool $TOOL $MAX_ITERATIONS"
     echo ""
     echo "To request revisions or discuss the current state of the repo:"
-    echo "  1. Use /chat to talk about the current state of the repository and request potential revisions or next steps."
+    echo "  1. Use /chat in an interactive session
     echo "  2. Re-run: ./researcher.sh --tool $TOOL $MAX_ITERATIONS"
     echo ""
     exit 0
