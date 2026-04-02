@@ -9,9 +9,13 @@ USER root
 # Make claude binary accessible to non-root users
 RUN chmod -R o+rX /root /root/.local
 
-# Create workspace and config directories and set permissions
-RUN mkdir -p /workspace /home/$USERNAME/.claude /home/$USERNAME/.conda && \
-  chown -R $USERNAME:$USERNAME /workspace /home/$USERNAME/.claude /home/$USERNAME/.conda
+# Create workspace and config directories and set permissions.
+# The .bashrc line symlinks ~/.claude to /workspace/._claude at shell start,
+# so conversations persist on the mounted workspace volume.
+RUN mkdir -p /workspace /home/$USERNAME/.conda && \
+  chown -R $USERNAME:$USERNAME /workspace /home/$USERNAME/.conda && \
+  echo 'mkdir -p /workspace/._claude && ln -sfn /workspace/._claude ~/.claude' \
+    >> /home/$USERNAME/.bashrc
 
 # Install conda environment as the researcher user so it is writable at runtime
 USER $USERNAME
