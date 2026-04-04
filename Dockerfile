@@ -14,7 +14,7 @@ RUN chmod -R o+rX /root /root/.local
 # so conversations persist on the mounted workspace volume.
 RUN mkdir -p /workspace /home/$USERNAME/.conda && \
   chown -R $USERNAME:$USERNAME /workspace /home/$USERNAME/.conda && \
-  echo 'mkdir -p /workspace/._claude && ln -sfn /workspace/._claude ~/.claude' \
+  echo 'mkdir -p /workspace/._claude && ln -sfn /workspace/._claude ~/.claude && ln -sfn /workspace/._claude.json ~/.claude.json' \
     >> /home/$USERNAME/.bashrc
 
 # Install conda environment as the researcher user so it is writable at runtime
