@@ -9,7 +9,7 @@ milestone, then stop. The human communicates with you between iterations.
 1. Read `project.json` (same directory as this file) to understand the analysis and its milestones
 2. Read `progress.txt` to understand what has been done and what was learned
 3. Check you are on the correct branch from `project.json` `branchName`. If not, check it out or create from main.
-4. Identify the current situation — one of three cases:
+4. Identify the current situation — one of four cases:
 
    **Case A**: A milestone has `passes: true` and has a `"revisions"` field
    → Apply the revisions (see Revision Handling below). If the milestone is a
