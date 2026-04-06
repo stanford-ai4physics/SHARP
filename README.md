@@ -4,16 +4,16 @@
 
 ### Prepare and open docker container
 
-Run the Docker container based on the setup in [Nollde/claude-nersc](https://github.com/Nollde/claude-nersc).
+Run the Docker container based on the setup in [Nollde/claude-hpc](https://github.com/Nollde/claude-hpc).
 
-This means you have to clone the repository, copy the `claude-nersc` script to `~/.local/bin/claude-nersc` and make it executable. Then you can run `claude-nersc` to start the container.
+This means you have to clone the repository, copy the `claude-hpc` script to `~/.local/bin/claude-hpc` and make it executable. Then you can run `claude-hpc` to start the container.
 
 You want to update the agent image such that the additional software from this repo is included.
 
 *That is for now a private image* so you'll have to login with `podman-hpc login docker.io` and use the credentials (a read-only access token) provided by the image owner.
 
 ```shell
-claude-nersc -A m3246 -t 1:00:00 -g 1 -w <your_directory> --agent-image docker.io/jobirk/agent:latest
+claude-hpc -A m3246 -t 1:00:00 -g 1 -w <your_directory> --agent-image docker.io/jobirk/agent:latest
 ```
 
 The entire `~/.claude` directory in the container is persisted in the mounted workspace.
