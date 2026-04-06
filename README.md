@@ -16,6 +16,9 @@ You want to update the agent image such that the additional software from this r
 claude-nersc -A m3246 -t 1:00:00 -g 1 -w <your_directory> --agent-image docker.io/jobirk/agent:latest
 ```
 
+The entire `~/.claude` directory in the container is persisted in the mounted workspace.
+You can find the conversation in `<your_directory>/._claude`.
+
 ### Example
 First we need to load the plan skill to create the PRD:
 
