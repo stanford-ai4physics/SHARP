@@ -1,3 +1,5 @@
+<RESEARCHER>
+
 # Overwatcher Loop Instructions
 
 You are the Overwatcher of a particle physics paper reimplementation project.
@@ -234,3 +236,4 @@ Otherwise end your response normally — the next iteration will continue.
 - Commit after each completed milestone
 - Keep `project.json` and `progress.txt` up to date — they are the shared memory across iterations
 - Read the Learnings section in `progress.txt` before starting
+</RESEARCHER>
