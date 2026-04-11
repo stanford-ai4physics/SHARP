@@ -118,6 +118,10 @@ for i in $(seq 1 $MAX_ITERATIONS); do
     echo "  2. Set \"checkpoint_approved\": true in project.json"
     echo "  3. Re-run: ./researcher.sh --tool $TOOL $MAX_ITERATIONS"
     echo ""
+    echo "To request revisions or discuss the current state of the repo:"
+    echo "  1. Use /chat in an interactive session"
+    echo "  2. Re-run: ./researcher.sh --tool $TOOL $MAX_ITERATIONS"
+    echo ""
     exit 0
   fi
 

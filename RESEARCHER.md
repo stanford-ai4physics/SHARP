@@ -11,17 +11,20 @@ milestone, then stop. The human communicates with you between iterations.
 1. Read `project.json` (same directory as this file) to understand the analysis and its milestones
 2. Read `progress.txt` to understand what has been done and what was learned
 3. Check you are on the correct branch from `project.json` `branchName`. If not, check it out or create from main.
-4. Identify the current situation — one of three cases:
+4. Identify the current situation — one of four cases:
 
-   **Case A**: A milestone has `passes: true` and `is_checkpoint: true` and `checkpoint_approved: false`
-   → A checkpoint is waiting for human review. Check for a `"feedback"` field (see
-     Checkpoint Handling below). If no feedback, signal `NEEDS_REVIEW`. If feedback
-     exists, apply the revisions first, then signal `NEEDS_REVIEW`.
+   **Case A**: A milestone has `passes: true` and has a `"revisions"` field
+   → Apply the revisions (see Revision Handling below). If the milestone is a
+     checkpoint, signal `NEEDS_REVIEW` after applying. If it is not a checkpoint,
+     continue to the next milestone.
 
-   **Case B**: All milestones have `passes: true` (and all checkpoints have `checkpoint_approved: true`)
+   **Case B**: A milestone has `passes: true` and `is_checkpoint: true` and `checkpoint_approved: false` (and no `"revisions"` field)
+   → A checkpoint is waiting for human review. Signal `NEEDS_REVIEW`.
+
+   **Case C**: All milestones have `passes: true` (and all checkpoints have `checkpoint_approved: true`)
    → The analysis is complete. Signal `COMPLETE`.
 
-   **Case C**: The next milestone has `passes: false`
+   **Case D**: The next milestone has `passes: false`
    → Work on it (see below).
 
 ## Working on a Milestone
@@ -86,7 +89,7 @@ APPEND to `progress.txt` (never replace):
 
 ## Checkpoint Handling
 
-When you reach Case A (checkpoint awaiting approval):
+When you reach Case B (checkpoint awaiting approval):
 
 1. Write a concise human-readable summary to `progress.txt`:
    ```
@@ -105,7 +108,7 @@ When you reach Case A (checkpoint awaiting approval):
    - [any other milestone-specific commands the human should try]
 
    To approve: set "checkpoint_approved": true for [Milestone ID] in project.json
-   To request revisions: add "feedback": ["fix X", "change Y"] to the milestone in project.json, then re-run researcher.sh
+   To request revisions: use `/chat` to talk about what needs changing — Claude will add revisions to project.json for you
    To reject completely: set "passes": false, then re-run researcher.sh
    ---
    ```
@@ -122,7 +125,8 @@ The human has three options when reviewing a checkpoint:
 **Option 1 — Approve:** Set `"checkpoint_approved": true` in `project.json`.
 The next iteration proceeds to the next milestone.
 
-**Option 2 — Request revisions:** Add a `"feedback"` array to the milestone in
+**Option 2 — Request revisions:** Use the `/chat` skill to talk about what
+needs changing. Claude will add a `"revisions"` array to the milestone in
 `project.json`, e.g.:
 
 ```json
@@ -132,7 +136,7 @@ The next iteration proceeds to the next milestone.
   "is_checkpoint": true,
   "checkpoint_approved": false,
   "passes": true,
-  "feedback": [
+  "revisions": [
     "Rename knn() to k_nearest_neighbors() for clarity",
     "Add a test that checks output is invariant to particle ordering",
     "Use 999.0 constant as a named variable, not a magic number"
@@ -141,21 +145,23 @@ The next iteration proceeds to the next milestone.
 ```
 
 The milestone stays `passes: true`. On the next iteration, the Overwatcher detects
-the feedback, applies the requested changes, removes the `feedback` field, and
+the revisions, applies the requested changes, removes the `"revisions"` field, and
 re-enters the checkpoint (signals `NEEDS_REVIEW` again).
 
 **Option 3 — Full rejection:** Set `"passes": false` in `project.json`.
 The Overwatcher redoes the milestone from scratch in the next iteration.
 
-### Detecting Feedback (Case A extended)
+### Revision Handling (Case A)
 
-When handling Case A, after confirming a checkpoint is awaiting approval, also check
-for a `"feedback"` field on the milestone:
+Any milestone with `passes: true` and a `"revisions"` field needs revisions applied,
+regardless of whether it is a checkpoint. When you detect this:
 
-- **No feedback field** → signal `NEEDS_REVIEW` as usual (first time reaching checkpoint)
-- **Has feedback array** → apply each feedback item, commit, remove the
-`feedback` field from `project.json`, append a revision entry to `progress.txt`,
-then signal `NEEDS_REVIEW` again for re-review
+1. Apply each revision item
+2. Commit the changes
+3. Remove the `"revisions"` field from `project.json`
+4. Append a revision entry to `progress.txt`
+5. If the milestone is a checkpoint (`is_checkpoint: true`) → signal `NEEDS_REVIEW` for re-review
+6. If the milestone is not a checkpoint → continue to the next case/milestone
 
 ## README.md Maintenance
 
