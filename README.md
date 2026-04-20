@@ -1,4 +1,16 @@
-# Agent Template
+# SHARP: A Scientific Human-Agent Reproduction Pipeline
+
+## Abstract
+> Reproducing scientific analyses is essential for preserving knowledge, building extensible codebases, and deepening researcher understanding -- yet the effort often outweighs its academic recognition.
+> We argue that the reproduction of scientific data analyses is fundamentally a translation task: converting human-readable knowledge (papers, documentation) into machine-readable analysis code.
+> This makes it uniquely well-suited for AI agents.
+> We present SHARP (Scientific Human-Agent Reproduction Pipeline), a structured framework for reproducing scientific analyses through human-agent collaboration.
+> SHARP decomposes a reproduction task into discrete steps, which an AI agent executes autonomously using specialized subagents for code generation, testing, and quality assurance.
+> At defined checkpoints, the researcher reviews progress, provides feedback, and steers the analysis - keeping the human firmly in control of scientific judgment while the agent handles implementation.
+> We demonstrate SHARP by reproducing a jet classification task in particle physics from a published paper.
+> We evaluate the reproduction along three axes: analysis performance against the original results, code quality and faithfulness, and the nature of the human-agent conversation.
+> The latter is evaluated with a novel framework for characterizing human-agent interactions.
+> Our work highlights a practical model for AI-assisted scientific reproduction where the researcher's role shifts from writing code to understanding, evaluating, and directing -- elevating human understanding rather than replacing it.
 
 ## Usage
 
@@ -10,8 +22,7 @@ This means you have to clone the repository, copy the `claude-hpc` script to `~/
 
 You want to update the agent image such that the additional software from this repo is included.
 
-*That is for now a private image* so you'll have to login with `podman-hpc login docker.io` and use the credentials (a read-only access token) provided by the image owner.
-
+Then run:
 ```shell
 claude-hpc -A m3246 -t 1:00:00 -g 1 -w <your_directory> --agent-image docker.io/jobirk/agent:latest
 ```
