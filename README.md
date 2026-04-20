@@ -24,7 +24,7 @@ You want to update the agent image such that the additional software from this r
 
 Then run:
 ```shell
-claude-hpc -A m3246 -t 1:00:00 -g 1 -w <your_directory> --agent-image docker.io/jobirk/agent:latest
+claude-hpc -A m3246 -t 1:00:00 -g 1 -w <your_directory> --agent-image docker.io/jobirk/sharp:latest
 ```
 
 The entire `~/.claude` directory in the container is persisted in the mounted workspace.
