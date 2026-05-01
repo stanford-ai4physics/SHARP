@@ -1,6 +1,7 @@
 # SHARP: A Scientific Human-Agent Reproduction Pipeline
 
 ## Abstract
+
 > Reproducing scientific analyses is essential for preserving knowledge, building extensible codebases, and deepening researcher understanding -- yet the effort often outweighs its academic recognition.
 > We argue that the reproduction of scientific data analyses is fundamentally a translation task: converting human-readable knowledge (papers, documentation) into machine-readable analysis code.
 > This makes it uniquely well-suited for AI agents.
@@ -23,6 +24,7 @@ This means you have to clone the repository, copy the `claude-hpc` script to `~/
 You want to update the agent image such that the additional software from this repo is included.
 
 Then run:
+
 ```shell
 claude-hpc -A m3246 -t 1:00:00 -g 1 -w <your_directory> --agent-image docker.io/jobirk/sharp:latest
 ```
@@ -31,13 +33,32 @@ The entire `~/.claude` directory in the container is persisted in the mounted wo
 You can find the conversation in `<your_directory>/._claude`.
 
 ### Example
+
 First we need to load the plan skill to create the PRD:
 
-> (PROMPT) Load the plan skill and create a PRD for replication (incl reimplementation of the code) of the paper https://arxiv.org/abs/2109.00546 up until figure 6 (right). Because resources on this machine are very limited I want to have a very small setup for the MAF (small architecture, limited number of epochs).
-We want to investigate the plan and optionally make changes.
+> (PROMPT) Load the plan skill and create a PRD for replication (incl reimplementation of the code) of the paper [https://arxiv.org/abs/2109.00546](https://arxiv.org/abs/2109.00546) up until figure 6 (right). Because resources on this machine are very limited I want to have a very small setup for the MAF (small architecture, limited number of epochs).
+> We want to investigate the plan and optionally make changes.
 
 Then we can transform the plan into a `project.json`:
+
 > (PROMPT) Load the setup skill and convert analysis-plan.md to project.json
 
 Third step, we run the researcher on the project.json:
 `./researcher.sh --tool claude 10`
+
+## Citation
+
+If you find this code useful in your research, please cite the following paper:
+
+```bibtex
+@article{Birk:2026zpd,
+    author = "Birk, Joschka and Kasieczka, Gregor and Mishra-Sharma, Siddharth and Nachman, Benjamin and Noll, Dennis and Wamorkar, Tanvi",
+    title = "{A Scientific Human-Agent Reproduction Pipeline}",
+    eprint = "2604.18752",
+    archivePrefix = "arXiv",
+    primaryClass = "hep-ph",
+    month = "4",
+    year = "2026"
+}
+```
+
