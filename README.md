@@ -51,14 +51,17 @@ Third step, we run the researcher on the project.json:
 If you find this code useful in your research, please cite the following paper:
 
 ```bibtex
-@article{Birk:2026zpd,
-    author = "Birk, Joschka and Kasieczka, Gregor and Mishra-Sharma, Siddharth and Nachman, Benjamin and Noll, Dennis and Wamorkar, Tanvi",
-    title = "{A Scientific Human-Agent Reproduction Pipeline}",
-    eprint = "2604.18752",
+@inproceedings{Birk:2026zpd,
+    author        = "Birk, Joschka and Kasieczka, Gregor and Mishra-Sharma, Siddharth and Nachman, Benjamin and Noll, Dennis and Wamorkar, Tanvi",
+    title         = "{A Scientific Human-Agent Reproduction Pipeline}",
+    booktitle     = "{Physics and AI Conference 2026 (PAI2026)}",
+    publisher     = "Zenodo",
+    month         = jun,
+    year          = "2026",
+    doi           = "10.5281/zenodo.21078068",
+    url           = "https://doi.org/10.5281/zenodo.21078068",
+    eprint        = "2604.18752",
     archivePrefix = "arXiv",
-    primaryClass = "hep-ph",
-    month = "4",
-    year = "2026"
+    primaryClass  = "hep-ph"
 }
 ```
-
